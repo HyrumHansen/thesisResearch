@@ -1,5 +1,5 @@
 # Full first order model for one factor
-mmat_onefactor_ord2 <- function(x){
+mmat_onefactor_ord1 <- function(x){
   trials <- length(x)
   intercept <- rep(1, trials)
 

@@ -1,0 +1,40 @@
+---
+title: "Problem Space Exploration"
+author: "Hyrum Hansen"
+date: '2023-04-09'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Math Formula Derivations
+
+Given a one-factor second order model, we derive a formula to compute SPV. Recall the second order model expressed in scalar form:
+
+$$\hat{y} = \beta_0 + \beta_1x_1 + \beta_2x^2 + \epsilon$$
+which can be generalized to 
+
+$$\mathbf{\hat{y}} = \mathbf{F}(\mathbf{X})\mathbf{\beta} + \epsilon$$
+in matrix-vector form. Now we derive the SPV formula for an arbitrary 3-trial experimental setting. That is, 
+
+$$\mathbf{x} = \begin{bmatrix}a\\b\\c\end{bmatrix}$$
+where $a, b$, and $c$ represent factor levels for the univariate experiment. Now the model matrix is 
+
+$$\mathbf{F}(\mathbf{X}) = \begin{bmatrix}1&a&a^2\\1&b&b^2\\1&c&c^2\end{bmatrix}.$$
+To compute the SPV for this arbitrary model matrix, we need to compute
+
+$$SPV(\mathbf{x}^T|\mathbf{X}) = Nf^T(\mathbf{x}^T)(\mathbf{F}(\mathbf{X})^T\mathbf{F}(\mathbf{X}))^{-1}f(\mathbf{x})$$
+so to make the calculation practicable lets make the inverse information matrix arbitrary:
+
+$$(\mathbf{F}(\mathbf{X})^T\mathbf{F}(\mathbf{X}))^{-1} =\begin{bmatrix}A&B&C\\D&E&F\\G&H&I\end{bmatrix}.$$
+Now for the one-factor setting we have 
+
+\begin{align}
+SPV(\mathbf{x}^T|\mathbf{X}) &= \begin{bmatrix}1&x&x^2\end{bmatrix}\begin{bmatrix}A&B&C\\D&E&F\\G&H&I\end{bmatrix}\begin{bmatrix}1\\x\\x^2\end{bmatrix}\\ \\
+&= 3(A + x(D+B) + x^2(C+E+G) + x^3(H+F) + Ix^4)
+\end{align}
+
+
+
