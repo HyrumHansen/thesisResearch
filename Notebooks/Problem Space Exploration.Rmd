@@ -2,7 +2,9 @@
 title: "Problem Space Exploration"
 author: "Hyrum Hansen"
 date: '2023-04-09'
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -31,10 +33,10 @@ so to make the calculation practicable lets make the inverse information matrix 
 $$(\mathbf{F}(\mathbf{X})^T\mathbf{F}(\mathbf{X}))^{-1} =\begin{bmatrix}A&B&C\\D&E&F\\G&H&I\end{bmatrix}.$$
 Now for the one-factor setting we have 
 
-\begin{align}
+\begin{align*}
 SPV(\mathbf{x}^T|\mathbf{X}) &= \begin{bmatrix}1&x&x^2\end{bmatrix}\begin{bmatrix}A&B&C\\D&E&F\\G&H&I\end{bmatrix}\begin{bmatrix}1\\x\\x^2\end{bmatrix}\\ \\
 &= 3(A + x(D+B) + x^2(C+E+G) + x^3(H+F) + Ix^4)
-\end{align}
+\end{align*}
 
 
 
