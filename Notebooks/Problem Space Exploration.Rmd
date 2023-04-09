@@ -34,9 +34,20 @@ $$(\mathbf{F}(\mathbf{X})^T\mathbf{F}(\mathbf{X}))^{-1} =\begin{bmatrix}A&B&C\\D
 Now for the one-factor setting we have 
 
 \begin{align*}
-SPV(\mathbf{x}^T|\mathbf{X}) &= \begin{bmatrix}1&x&x^2\end{bmatrix}\begin{bmatrix}A&B&C\\D&E&F\\G&H&I\end{bmatrix}\begin{bmatrix}1\\x\\x^2\end{bmatrix}\\ \\
+SPV(\mathbf{x}^T|\mathbf{X}) &= 3\times  \begin{bmatrix}1&x&x^2\end{bmatrix}\begin{bmatrix}A&B&C\\D&E&F\\G&H&I\end{bmatrix}\begin{bmatrix}1\\x\\x^2\end{bmatrix}\\ \\
 &= 3(A + x(D+B) + x^2(C+E+G) + x^3(H+F) + Ix^4)
 \end{align*}
+
+The two factor setting is 
+
+\begin{align*}
+SPV(\mathbf{x}^T|\mathbf{X}) &= 3\times  \begin{bmatrix}1&x_1&x_2&x_1^2&x_2^2&x_1x_2\end{bmatrix}\begin{bmatrix}f_{11}&\hdots&f_{16}\\
+\vdots&\ddots&\vdots\\f_{61}&\hdots&f_{66}\end{bmatrix}\begin{bmatrix}1\\x_1\\x_2\\x_1^2\\x_2^2\\x_1x_2\end{bmatrix}\\ \\
+&= \begin{bmatrix}\vec{x}^T\vec{f}_{1i}&\vec{x}^T\vec{f}_{2i}&\vec{x}^T\vec{f}_{3i}&\vec{x}^T\vec{f}_{4i}&\vec{x}^T\vec{f}_{5i}&\vec{x}^T\vec{f}_{6i}\end{bmatrix}\begin{bmatrix}1\\x_1\\x_2\\x_1^2\\x_2^2\\x_1x_2\end{bmatrix}\\ \\
+&= \vec{x}^T\vec{f}_{1i}+\vec{x}^T\vec{f}_{2i}x_1+\vec{x}^T\vec{f}_{3i}x_2+\vec{x}^T\vec{f}_{4i}x_1^2+\vec{x}^T\vec{f}_{5i}x_2^2+\vec{x}^T\vec{f}_{6i}x_1x_2
+\end{align*}
+
+The highest order terms in this expression will be $x_1^4$ and $x_2^4$. 
 
 
 
