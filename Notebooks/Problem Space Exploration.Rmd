@@ -49,5 +49,13 @@ SPV(\mathbf{x}^T|\mathbf{X}) &= 3\times  \begin{bmatrix}1&x_1&x_2&x_1^2&x_2^2&x_
 
 The highest order terms in this expression will be $x_1^4$ and $x_2^4$. 
 
+## Plotting SPV
+
+For the K=1 case (and an arbitrary inverse information matrix):
+
+```{r echo = FALSE}
+curve(3*(1*x^2 + 0.5*x + -0.5)*x^2 + 3*-0.5*x^2 + 3*(1*x^2 + 0.5*x + 0)*x + 3*1*x + 3*-1, from=-2, to=1, xlab="x", ylab="y")
+```
+
 
 
