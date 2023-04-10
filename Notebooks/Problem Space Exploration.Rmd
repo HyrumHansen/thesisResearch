@@ -54,8 +54,64 @@ The highest order terms in this expression will be $x_1^4$ and $x_2^4$.
 For the K=1 case (and an arbitrary inverse information matrix):
 
 ```{r echo = FALSE}
-curve(3*(1*x^2 + 0.5*x + -0.5)*x^2 + 3*-0.5*x^2 + 3*(1*x^2 + 0.5*x + 0)*x + 3*1*x + 3*-1, from=-2, to=1, xlab="x", ylab="y")
+curve(3*(1*x^2 + 0.5*x + -0.5)*x^2 + 3*-0.5*x^2 + 3*(1*x^2 + 0.5*x + 0)*x + 3*1*x + 3*-1, from=-2, to=1, xlab="x", ylab="SPV")
 ```
+Here's a similar plot for the K=2 case. For this problem the candidate design 
+matrix is arbitrary.
+
+```{r, echo = FALSE}
+# Full second order model for one factor
+mmat_twofactor_ord2 <- function(x){
+  trials <- nrow(x)
+  intercept <- rep(1, trials)
+  x1_squared <- x[ ,1]^2
+  x2_squared <- x[ ,2]^2
+  interaction <- x[ ,1]*x[ ,2]
+
+
+  model_matrix <- cbind(intercept, x, x1_squared, x2_squared, interaction)
+  return(model_matrix)
+}
+```
+
+
+```{r, echo = FALSE}
+suppressWarnings(library(ggplot2))
+suppressWarnings(library(MASS))
+suppressWarnings(library(reshape2))
+suppressWarnings(library(reshape))
+
+x1 <- sort(runif(100, -1, 1))
+x2 <- sort(runif(100, -1, 1))
+
+candidate_x <- matrix(runif(12, -1, 1), 
+                      byrow = TRUE, nrow = 6, ncol = 2)
+FX <- mmat_twofactor_ord2(candidate_x)
+spv <- rep(0, length(x1)*length(x2))
+
+i=0
+for(my_x1 in x1){
+  for(my_x2 in x2){
+    i = i + 1
+    var <- c(1, my_x1, my_x2, my_x1^2, my_x2^2, my_x1*my_x2)
+    spv[i] <- t(var)%*%solve(t(FX)%*%FX)%*%var
+  }
+}
+
+spv <- matrix(spv, nrow = length(x1), ncol = length(x2))
+
+mtrx.melt <- suppressWarnings(melt(spv, id.vars = c("x1", "x2"), measure.vars = "SPV"))
+names(mtrx.melt) <- c("x1", "x2", "SPV")
+
+suppressWarnings(ggplot(mtrx.melt, aes(x = x1, y = x2, z = SPV)) +
+         stat_contour(geom = "polygon", aes(fill = ..level..)) +
+         geom_tile(aes(fill = SPV)) +
+         stat_contour(bins = 15) +
+         xlab("x1") +
+         ylab("x2") +
+         guides(fill = guide_colorbar(title = "SPV for random design matrix")))
+```
+
 
 
 
