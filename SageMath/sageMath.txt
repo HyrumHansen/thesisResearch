@@ -1,0 +1,24 @@
+# One variable, full second order model
+var('x')
+xVec1 = vector([1, x, x^2])
+
+var('a, b, c, d, e, f, g, h, i')
+
+F1 = matrix([[a, b, c], 
+            [d, e, f], 
+            [g, h, i]])
+
+# Two variable, full second order model
+var('x1, x2')
+xVec2 = vector([1, x1, x2, x1^2, x2^2, x1*x2])
+
+var('a11, a12, a13, a14, a15, a16, a21, a22, a23, a24, a25, a26, a31, a32, a33, a34, a35, a36, a41, a42, a43, a44, a45, a46, a51, a52, a53, a54, a55, a56, a61, a62, a63, a64, a65, a66')
+F2 = matrix([[a11, a12, a13, a14, a15, a16],
+            [a21, a22, a23, a24, a25, a26], 
+            [a31, a32, a33, a34, a35, a36], 
+            [a41, a42, a43, a44, a45, a46], 
+            [a51, a52, a53, a54, a55, a56], 
+            [a61, a62, a63, a64, a65, a66]])
+
+#xVec2*F2*xVec2
+3*xVec1*F1*xVec1
