@@ -1,0 +1,809 @@
+---
+title: "STAT 6820: Assignment 6"
+author: "Hyrum Hansen"
+date: '2023-03-30'
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(matlib)
+library(xtable)
+library(stats)
+library(dplyr)
+library(tidyverse)
+library(ggplot2)
+```
+
+```{r}
+
+##########################
+## FUNCTION DEFINITIONS ##
+##########################
+
+# This function computes the D score for a given matrix
+compute_D <- function(X, n_factors, n_trials){
+  
+  # Convert to matrix if necessary
+  if(is.vector(X)){
+    X <- matrix(X, n_trials, n_factors)
+  }
+  
+  intercept <- rep(1, nrow(X))
+  interaction <- X[,2]*X[,3]
+  model_matrix <- cbind(intercept, X, interaction)
+  
+  # Then compute the D score for the candidate design
+  return(det(t(model_matrix)%*%model_matrix))
+}
+
+# This function computes the A score for a given matrix
+compute_A <- function(X, n_factors, n_trials){
+  
+  # Convert to matrix if necessary
+  if(is.vector(X)){
+    X <- matrix(X, n_trials, n_factors)
+  }
+  
+  intercept <- rep(1, nrow(X))
+  interaction <- X[,2]*X[,3]
+  model_matrix <- cbind(intercept, X, interaction)
+  
+  # Then compute the A criteria for the candidate design
+  return(sum(1/eigen(t(model_matrix)%*%model_matrix)$values))
+}
+
+# This function computes the I score for the 2 factor setting
+compute_I_2 <- function(X){
+  
+  # We need to get the moment matrix
+  row1 <- c(4, 0, 0, 0, 4/3, 4/3)
+  row2 <- c(0, 4/3, 0, 0, 0, 0)
+  row3 <- c(0, 0, 4/3, 0, 0, 0)
+  row4 <- c(0, 0, 0, 4/9, 0, 0)
+  row5 <- c(4/3, 0, 0, 0, 4/5, 4/9)
+  row6 <- c(4/3, 0, 0, 0, 4/9, 4/5)
+  moment_matrix <- matrix(c(row1, row2, row3, row4, row5, row6), byrow = TRUE, nrow = 6, ncol = 6)
+
+  intercept <- rep(1, nrow(X))
+  interaction <- X[,1]*X[,2]
+  x1_sq <- X[,1]^2
+  x2_sq <- X[,2]^2
+  model_matrix <- cbind(intercept, X, interaction, x1_sq, x2_sq)
+  return((1/4)*sum(diag(inv(t(model_matrix)%*%model_matrix))))
+}
+
+
+
+# Following the example of Peter Goos and Brad Jones, this function
+# uses a maximization perspective to find the optimal model matrix.
+coordinate_exchange <- function(n_factors, n_trials, npasses, testvec, crit){
+
+  # Instantiate a matrix of random values
+  n_rows = n_trials
+  n_cols = n_factors
+  X <- matrix(c(runif(n_rows*n_cols, min=-1, max=1)), nrow=n_rows, ncol=n_cols)
+  # Compute the D optimality score until the number of trials has been
+  # reached or until there is no more improvement
+  trial <- 0
+  testvalues <- testvec
+
+  while(trial < npasses){
+
+    candidate_matrices = lapply(1:length(testvalues),
+                                matrix, data= NA, nrow=n_rows, ncol=n_cols)
+    Xprevious <- X
+    # This thingy exchanges the coordinates
+    for(i in 1:n_rows){
+      for(j in 1:n_cols){
+        for(val in 1:length(testvalues)){
+
+          xtest <- X
+          xtest[i, j] <- testvalues[val]
+          candidate_matrices[val][[1]] <- xtest
+
+        }
+        if(crit == "D"){
+          # This thingy determines which matrix in the list of candidate matrices
+          # has a higher D score
+          d_scores <- unlist(lapply(candidate_matrices, compute_D))
+          max_index <- which.max(d_scores)
+          
+          # Now update if the matrix with one element swapped has a greater D score
+          if(compute_D(X) < compute_D(candidate_matrices[[max_index]])){
+            X <- candidate_matrices[[max_index]]
+          }
+        }
+        
+        if(crit == "A"){
+          a_scores <- unlist(lapply(candidate_matrices, compute_A))
+          min_index <- which.min(a_scores)
+          
+          # Now update if the matrix with one element swapped has a smaller A score
+          if(compute_A(X) > compute_A(candidate_matrices[[min_index]])){
+            X <- candidate_matrices[[min_index]]
+          }
+        }
+        
+        if(crit == "I_1"){
+          i_scores <- unlist(lapply(candidate_matrices, compute_I_1))
+          min_index <- which.min(i_scores)
+          
+          # Now update if the matrix with one element swapped has a smaller A score
+          if(compute_I_1(X) > compute_I_1(candidate_matrices[[min_index]])){
+            X <- candidate_matrices[[min_index]]
+          }
+        }
+        
+        if(crit == "I_2"){
+          i_scores <- unlist(lapply(candidate_matrices, compute_I_2))
+          min_index <- which.min(i_scores)
+          
+          # Now update if the matrix with one element swapped has a smaller A score
+          if(compute_I_2(X) > compute_I_2(candidate_matrices[[min_index]])){
+            X <- candidate_matrices[[min_index]]
+          }
+        }
+      }
+    }
+    trial = trial + 1
+
+    # Break out of the loop if no change has been made during the last pass
+    if(trial > 1 && identical(X[[1]], Xprevious[[1]])){
+      break
+    }
+  }
+  return(X)
+}
+
+mat_to_vec <- function(X){
+  
+}
+```
+
+
+
+
+## Problem 1:
+
+```{r, include = FALSE}
+
+###############
+## PROBLEM 1 ##
+###############
+
+
+# This simulation provides A and D score lists for candidate designs found by R's optim function
+n_cols = 6
+n_rows = 12
+iterations = 3
+testvalues = c(-1, 1)
+optim_candidate_a_designs = lapply(1:iterations, 
+                          matrix, data= NA, nrow=n_rows, ncol=n_cols)
+optim_candidate_d_designs = lapply(1:iterations, 
+                          matrix, data= NA, nrow=n_rows, ncol=n_cols)
+cexch_candidate_a_designs = lapply(1:iterations, 
+                          matrix, data= NA, nrow=n_rows, ncol=n_cols)
+cexch_candidate_d_designs = lapply(1:iterations, 
+                          matrix, data= NA, nrow=n_rows, ncol=n_cols)
+optim_ascores <- rep(0, iterations)
+optim_dscores <- rep(0, iterations)
+cexch_ascores <- rep(0, iterations)
+cexch_dscores <- rep(0, iterations)
+
+# Iterate and compute
+for(i in 1:iterations){
+  
+  test_matrix <- matrix(c(runif(n_rows*n_cols, min=-1, max=1)), nrow=n_rows, ncol=n_cols)
+  test_vector <- c(test_matrix)
+  
+  # Maximize the D criteria with optim
+  d_optimal_vec <- stats::optim(test_vector, compute_D, n_trials = n_rows, n_factors = n_cols, method = "L-BFGS", control=list(fnscale=-1), lower=rep(-1, length(test_vector)),upper=rep(1, length(test_vector)))$par
+  
+  # Minimize the A criteria with optim
+  a_optimal_vec <- try(stats::optim(test_vector, compute_A, n_trials = n_rows, n_factors = n_cols, method = "L-BFGS-B", lower=rep(-1, length(test_vector)), upper=rep(1, length(test_vector)))$par, silent=TRUE)
+  
+  # We're having some issues with the optimization algorithm's sensitivity to starting conditions.
+  while("try-error" %in% class(a_optimal_vec)){
+  test_matrix <- matrix(c(runif(n_rows*n_cols, min=-1, max=1)), nrow=n_rows, ncol=n_cols)
+  test_vector <- c(test_matrix)
+  a_optimal_vec <- try(stats::optim(test_vector, compute_A, n_trials = n_rows, n_factors = n_cols, method = "L-BFGS-B", lower=rep(-1, length(test_vector)), upper=rep(1, length(test_vector)))$par,silent=TRUE)
+  }
+  
+  # Coordinate Exchange for D scores
+  cexch_candidate_d_designs[[i]] <- coordinate_exchange(n_cols, 
+                                                  n_rows, 5, testvalues, "D")
+  cexch_dscores[i] <- compute_D(cexch_candidate_d_designs[[i]])
+  
+  # Coordinate Exchange for A scores
+  cexch_candidate_a_designs[[i]] <- coordinate_exchange(n_cols, 
+                                                  n_rows, 5, testvalues, "A")
+  cexch_ascores[i] <- compute_A(cexch_candidate_a_designs[[i]])
+  
+  # Convert output optimal parameter vectors to matrices
+  d_optimal_mat <- matrix(d_optimal_vec, n_rows, n_cols)
+  a_optimal_mat <- matrix(a_optimal_vec, n_rows, n_cols)
+  
+  # Populate the lists with relevant values
+  optim_candidate_a_designs[[i]] <- a_optimal_mat
+  optim_candidate_d_designs[[i]] <- d_optimal_mat
+  optim_ascores[i] <- compute_A(a_optimal_mat)
+  optim_dscores[i] <- compute_D(d_optimal_mat)
+  
+  if(i %% 10 == 0){
+    cat("\nTrial: ", i)
+  }
+}
+
+c1 <- c(1,1,-1,-1,1,1,-1,-1,1,-1,-1,1)
+c2 <- c(1,-1,1,-1,1,-1,-1,1,1,1,-1,-1)
+c3 <- c(-1,-1,1,-1,1,1,-1,-1,-1,-1,1,-1)
+c4 <- c(1,1,1,1,-1,1,-1,-1,-1,1,-1,-1)
+c5 <- c(-1,1,1,-1,-1,1,1,1,1,-1,-1,-1)
+c6 <- c(1,-1,-1,1,1,1,1,1,-1,-1,-1,-1)
+
+mat <- matrix(c(c1, c2, c3, c4, c5, c6), byrow = FALSE, nrow = 12, ncol = 6)
+```
+
+`r toString(iterations)` trials were run computing the A and D score using the built-in optimization routine *optim* as well as my implementation of coordinate exchange. A boxplot is given below visualizing the efficiency of the two algorithms, using Peter \& Goos proposed design as a baseline for comparison.
+
+```{r}
+optim_a_efficiencies <- unlist(lapply(optim_ascores,function(x){
+  compute_A(mat)/x*100
+  }))
+cexch_a_efficiencies <- unlist(lapply(cexch_ascores,function(x){
+  compute_A(mat)/x*100
+  }))
+optim_d_efficiencies <- unlist(lapply(optim_dscores,function(x){
+  x/compute_D(mat)*100
+  }))
+cexch_d_efficiencies <- unlist(lapply(cexch_dscores,function(x){
+  x/compute_D(mat)*100
+  }))
+
+a_efficiencies <- data.frame(optim_a_efficiencies, cexch_a_efficiencies)
+d_efficiencies <- data.frame(optim_d_efficiencies, cexch_d_efficiencies)
+
+boxplot(a_efficiencies, outline=FALSE, col = c("red", "blue"))
+boxplot(d_efficiencies, col = c("red", "blue"))
+```
+
+** WRITE ANALYSIS **
+
+\newpage
+
+## Problem 2:
+
+Here we derive the region moments matrices for the $K=1, 2$ settings. 
+
+For the $K=1$ setting, we compute 
+
+```{=latex}
+\begin{align*}
+\mathbf{M} &= \int_{\mathbf{x}\in[-1, +1]^2}\mathbf{f}(\mathbf{x})\mathbf{f'}(\mathbf{x})d\mathbf{x}\\ \\
+&=\int_{-1}^{+1}\begin{bmatrix}
+1&x&x^2\\
+x&x^2&x^3\\
+x^2&x^3&x^4\\
+\end{bmatrix}dx\\ \\
+&= \begin{bmatrix}
+x&\dfrac{x^2}{2}&\dfrac{x^3}{3}\\ \\
+\dfrac{x^2}{2}&\dfrac{x^3}{3}&\dfrac{x^4}{4}\\ \\
+\dfrac{x^3}{3}&\dfrac{x^4}{4}&\dfrac{x^5}{5}\\ \\
+\end{bmatrix}\big|_{-1}^{+1}\\ \\
+&= \begin{bmatrix}
+1&\dfrac{1}{2}&\dfrac{1}{3}\\ \\
+\dfrac{1}{2}&\dfrac{1}{3}&\dfrac{1}{4}\\ \\
+\dfrac{1}{3}&\dfrac{1}{4}&\dfrac{1}{5}\\ \\
+\end{bmatrix} - 
+\begin{bmatrix}
+-1&\dfrac{1}{2}&-\dfrac{1}{3}\\ \\
+\dfrac{1}{2}&-\dfrac{1}{3}&\dfrac{1}{4}\\ \\
+-\dfrac{1}{3}&\dfrac{1}{4}&-\dfrac{1}{5}\\ \\
+\end{bmatrix} =
+\begin{bmatrix}
+2&0&\dfrac{2}{3}\\
+0&\dfrac{2}{3}&0\\
+\dfrac{2}{3}&0&\dfrac{2}{5}
+\end{bmatrix}
+\end{align*}
+```
+For the $K=2$ setting, we compute 
+
+```{=latex}
+\begin{align*}
+\mathbf{M} &= \int_{\mathbf{x}\in[-1, +1]^2}\mathbf{f}(\mathbf{x})\mathbf{f'}(\mathbf{x})d\mathbf{x}\\
+&=\int_{-1}^{+1}\int_{-1}^{+1}\begin{bmatrix}
+1&x_1&x_2&x_1x_2&x_1^{2}&x_2^2\\
+x_1&x_1^2&x_1x_2&x_1^2x_2&x_1^3&x_1x_2^2\\
+x_2&x_1x_2&x_2^2&x_1x_2^2&x_1^2x_2&x_2^3\\
+x_1x_2&x_1^2x_2&x_1x_2^2&x_1^2x_2^2&x_1^3x_2&x_1x_2^3\\
+x_1^2&x_1^3&x_1^2x_2&x_1^3x_2&x_1^4&x_1^2x_2^2\\
+x_2^2&x_1x_2^2&x_2^3&x_1x_2^3&x_1^2x_2^2&x_2^4\\
+\end{bmatrix}dx_1dx_2\\
+\end{align*}
+```
+
+## Problem 3:
+
+```{r}
+# Full second order model for one factor
+mmat_onefactor_ord2 <- function(x){
+  trials <- length(x)
+  intercept <- rep(1, trials)
+  squared <- x^2
+
+  model_matrix <- cbind(intercept, x, squared)
+  return(model_matrix)
+}
+
+# Full first order model for one factor
+mmat_twofactor_ord2 <- function(x){
+  trials <- nrow(x)
+  intercept <- rep(1, trials)
+  x1_squared <- x[ ,1]^2
+  x2_squared <- x[ ,2]^2
+  interaction <- x[ ,1]*x[ ,2]
+
+
+  model_matrix <- cbind(intercept, x[ ,1], x[ ,2], x1_squared, x2_squared, interaction)
+  return(model_matrix)
+}
+
+# This function computes the I score for the 1 factor setting
+compute_I_1 <- function(FX){
+  
+  # We need to get the moment matrix
+  row1 <- c(2, 0, 2/3)
+  row2 <- c(0, 2/3, 0)
+  row3 <- c(2/3, 0, 2/5)
+  M1 <- matrix(c(row1, row2, row3), byrow = TRUE, nrow = 3, ncol = 3)
+  
+  return(sum(diag(solve(t(FX)%*%FX, M1))))
+}
+
+# This function computes the I score for the 2 factor setting
+compute_I_2 <- function(FX){
+  
+  # We need to get the moment matrix
+  row1 <- c(4, 0, 0, 0, 4/3, 4/3)
+  row2 <- c(0, 4/3, 0, 0, 0, 0)
+  row3 <- c(0, 0, 4/3, 0, 0, 0)
+  row4 <- c(0, 0, 0, 4/9, 0, 0)
+  row5 <- c(4/3, 0, 0, 0, 4/5, 4/9)
+  row6 <- c(4/3, 0, 0, 0, 4/9, 4/5)
+  M2 <- matrix(c(row1, row2, row3, row4, row5, row6), byrow = TRUE, nrow = 6, ncol = 6)
+
+  return(sum(diag(solve(t(FX)%*%FX, M2))))
+}
+```
+
+```{r}
+n_iter <- 100
+candidate_x <- vector("list", length = n_iter)
+testvalues <- seq(-1, 1, length.out = 21)
+trials <- 5
+
+for(iter in 1:n_iter){
+  x <- runif(trials, -1, 1)
+  x_list <- vector("list", length = length(testvalues) + 1)
+  x_list[[1]] <- x
+  
+  # The following is an implementation of coordinate exchange to find
+  # I-optimal designs in the one-factor setting for a second order model.
+  
+  progress <- TRUE
+  while(progress){
+    
+    xold <- x
+    
+    # We will begin by looping through each value in x. At iteration i, the 
+    # ith entry in x is the one that will be changed. 
+    
+    for(i in 1:length(x)){
+      
+      # We next loop through the test values. We generate a candidate x vector
+      # with each test value in the ith position.
+      
+      for(val in testvalues){
+        xtest <- x
+        xtest[i] <- val
+        x_list[[which(testvalues == val) + 1]] <- xtest
+      }
+      
+      # We have generated a list of candidate vectors. Now we need to compute the
+      # G-score and re-assign the matrix with the highest G score to the variable
+      # x. 
+      
+      model_matrices <- lapply(x_list, mmat_onefactor_ord2)
+      
+      # We get a singularity issue every once in a while that fucks up the loop. 
+      # I'm thinking we should use a try block
+      i_scores <- unlist(try(lapply(model_matrices, compute_I_1), silent = TRUE))
+      if(is(i_scores, 'try-error')) break
+      x <- x_list[which(i_scores == min(i_scores))][[1]]
+    }
+    
+    # If we have made it through an entire pass without improvement this 
+    # design is said to be I-optimal.
+    
+    if(all(xold == x)){
+      progress = FALSE
+    }
+  }
+ 
+  # One iteration has been complete. A local minimum has been found, now add
+  # this candidate design to the list
+  candidate_x[[iter]] <- x
+}
+
+# Now we have a bunch of these candidate matrices. We want to compute the I
+# scores for each one to get some idea of performance.
+one_fact_i_model_matrices <- lapply(candidate_x, mmat_onefactor_ord2)
+one_fact_i_scores <- unlist(lapply(one_fact_i_model_matrices, compute_I_1))
+num_unique_scores <- length(unique(one_fact_i_scores))
+num_unique_models <- length(unique(model_matrices))
+percent <- length(candidate_x[which(one_fact_i_scores == min(one_fact_i_scores))])/length(candidate_x)
+min_one_fact_i <- candidate_x[which(one_fact_i_scores == max(one_fact_i_scores))][[1]]
+```
+
+
+For the $K=1$, $N=5$ setting, coordinate exchange was run `r toString(n_iter)` times. Despite a large number of attempts, there were only `r toString(num_unique_models)` *unique* proposed designs. There were even fewer unique i-scores, just `r toString(num_unique_scores)`. In fact, `r toString(round(percent, 2)*100)`\% (`r toString(length(candidate_x[which(i_scores == min(i_scores))]))` total) of the proposed designs achieved the minimum . The prevalence of equivalent designs makes recommendation challenging, but a design that achieved the minimum i-score (`r min(i_scores)`) was 
+
+$$\mathbf{X} = \begin{bmatrix}-1.0\\1.0\\-0.1\\-0.1\\0.2\end{bmatrix}$$
+```{r}
+n_iter <- 100
+candidate_x <- replicate(n_iter, matrix(nrow = 10, ncol = 2), simplify = FALSE)
+testvalues <- seq(-1, 1, length.out = 21)
+trials <- 5
+
+for(iter in 1:n_iter){
+  x <- matrix(runif(20, -1, 1), nrow = 10, ncol = 2)
+  x_list <- replicate(length(testvalues) + 1, 
+                      matrix(nrow = 10, ncol = 2), simplify = FALSE)
+  x_list[[1]] <- x
+  
+  # The following is an implementation of coordinate exchange to find
+  # I-optimal designs in the one-factor setting for a second order model.
+  
+  progress <- TRUE
+  while(progress){
+    
+    xold <- x
+    
+    # We will begin by looping through each value in x. At iteration i, j,  the 
+    # i, jth entry in x is the one that will be changed. 
+    
+    for(i in 1:nrow(x)){
+      for(j in 1:ncol(x)){
+        
+        # We next loop through the test values. We generate a candidate x matrix
+        # with each test value in the i, jth position.
+      
+        for(val in testvalues){
+          xtest <- x
+          xtest[i, j] <- val
+          x_list[[which(testvalues == val) + 1]] <- xtest
+        }
+      
+        # We have generated a list of candidate vectors. Now we need to compute the
+        # G-score and re-assign the matrix with the highest G score to the variable
+        # x. 
+        
+        model_matrices <- lapply(x_list, mmat_twofactor_ord2)
+        
+        # We get a singularity issue every once in a while that fucks up the loop. 
+        # I'm thinking we should use a try block
+        i_scores <- unlist(try(lapply(model_matrices, compute_I_2), silent = TRUE))
+        if(is(i_scores, 'try-error')) break
+        x <- x_list[which(i_scores == min(i_scores))][[1]]
+      }
+    }
+    
+    # If we have made it through an entire pass without improvement this 
+    # design is said to be I-optimal.
+    
+    if(all(xold == x)){
+      progress = FALSE
+    }
+  }
+ 
+  # One iteration has been complete. A local minimum has been found, now add
+  # this candidate design to the list
+  candidate_x[[iter]] <- x
+}
+
+# Now we have a bunch of these candidate matrices. We want to compute the I
+# scores for each one to get some idea of performance.
+two_fact_i_model_matrices <- lapply(candidate_x, mmat_twofactor_ord2)
+two_fact_i_scores <- unlist(lapply(two_fact_i_model_matrices, compute_I_2))
+num_unique_scores <- length(unique(two_fact_i_scores))
+num_unique_models <- length(unique(model_matrices))
+percent <- length(candidate_x[which(two_fact_i_scores == min(two_fact_i_scores))])/length(candidate_x)
+min_two_fact_i <- candidate_x[which(two_fact_i_scores == max(two_fact_i_scores))][[1]]
+```
+
+For the $K=2$, $N=10$ setting we perform the same computations. Similar results were obtained. There were only `r toString(num_unique_models)` *unique* proposed designs and just `r toString(num_unique_scores)` unique i values. `r toString(round(percent, 2)*100)`\% (`r toString(length(candidate_x[which(i_scores == min(i_scores))]))` total) of the proposed designs achieved the minimum . A design that achieved the minimum i-score (`r min(i_scores)`) was 
+
+$$\mathbf{X} = \begin{bmatrix}0.1&0.1\\1.0&-1.0\\-0.3&-1.0\\-1.0&1.0\\-0.3&-1.0\\0.1&0.1\\-1.0&-0.5\\1.0&1.0\\0.1&0.1\\0.0&1.0\end{bmatrix}$$
+
+
+## Problem 4:
+
+Several thousand optimal designs were generated for the $K=1, N=5$ and $K=2, N=10$ experimental settings. Design points from candidate designs that achieved lowest G score are plotted in the next section.
+
+## Problem 5:
+
+```{r}
+g_opt_one_fact <- function(FX){
+
+  # Discritize the continuous parameter space to make calculations feasible
+  grid <- c(-1, -0.5, 0, 0.5, 1)
+
+  SPVs <- rep(0, length(grid))
+
+  for(x in grid){
+    var <- c(1, x, x^2)
+    spv <- 5*t(var)%*%solve(t(FX)%*%FX)%*%var
+    SPVs[which(grid == x)] <- spv
+  }
+
+  return(max(SPVs))
+}
+
+g_opt_two_fact <- function(FX){
+
+  # Discritize the continuous parameter space to make calculations feasible
+  grid <- c(-1, -0.5, 0, 0.5, 1)
+
+  SPVs <- rep(0, length(grid)^2)
+
+  for(x1 in grid){
+    for(x2 in grid){
+      var <- c(1, x1, x2, x1^2, x2^2, x1*x2)
+      spv <- 10*t(var)%*%solve(t(FX)%*%FX)%*%var
+      SPVs[which(grid == x1) * which(grid==x2)] <- spv
+    }
+  }
+
+  return(max(SPVs))
+}
+```
+
+```{r}
+n_iter <- 100
+candidate_x <- vector("list", length = n_iter)
+testvalues <- seq(-1, 1, length.out = 21)
+trials <- 5
+
+for(iter in 1:n_iter){
+  x <- runif(trials, -1, 1)
+  x_list <- vector("list", length = length(testvalues) + 1)
+  x_list[[1]] <- x
+  
+  # The following is an implementation of coordinate exchange to find
+  # I-optimal designs in the one-factor setting for a second order model.
+  
+  progress <- TRUE
+  while(progress){
+    
+    xold <- x
+    
+    # We will begin by looping through each value in x. At iteration i, the 
+    # ith entry in x is the one that will be changed. 
+    
+    for(i in 1:length(x)){
+      
+      # We next loop through the test values. We generate a candidate x vector
+      # with each test value in the ith position.
+      
+      for(val in testvalues){
+        xtest <- x
+        xtest[i] <- val
+        x_list[[which(testvalues == val) + 1]] <- xtest
+      }
+      
+      # We have generated a list of candidate vectors. Now we need to compute the
+      # G-score and re-assign the matrix with the highest G score to the variable
+      # x. 
+      
+      model_matrices <- lapply(x_list, mmat_onefactor_ord2)
+      
+      # We get a singularity issue every once in a while that fucks up the loop. 
+      # I'm thinking we should use a try block
+      g_scores <- unlist(try(lapply(model_matrices, g_opt_one_fact), silent = TRUE))
+      if(is(g_scores, 'try-error')) break
+      x <- x_list[which(g_scores == min(g_scores))][[1]]
+    }
+    
+    # If we have made it through an entire pass without improvement this 
+    # design is said to be I-optimal.
+    
+    if(all(xold == x)){
+      progress = FALSE
+    }
+  }
+ 
+  # One iteration has been complete. A local minimum has been found, now add
+  # this candidate design to the list
+  candidate_x[[iter]] <- x
+}
+
+# Now we have a bunch of these candidate matrices. We want to compute the I
+# scores for each one to get some idea of performance.
+one_fact_g_model_matrices <- lapply(candidate_x, mmat_onefactor_ord2)
+one_fact_g_scores <- unlist(lapply(one_fact_g_model_matrices, g_opt_one_fact))
+max_one_fact_g <- candidate_x[which(two_fact_g_scores == max(two_fact_g_scores))][[1]]
+
+data <- data.frame(cbind(c(1,2,3,4,5), max_one_fact_g))
+ggplot(data, aes(x=V1, y=max_two_fact_g)) + 
+  geom_point() +
+  ggtitle("\nPlot of Optimal Design Points for K=1, N=5\n")+
+  xlab("Index") + 
+  ylab("Factor Level")
+```
+
+
+```{r}
+n_iter <- 100
+candidate_x <- replicate(n_iter, matrix(nrow = 10, ncol = 2), simplify = FALSE)
+testvalues <- seq(-1, 1, length.out = 21)
+trials <- 5
+
+for(iter in 1:n_iter){
+  x <- matrix(runif(20, -1, 1), nrow = 10, ncol = 2)
+  x_list <- replicate(length(testvalues) + 1, 
+                      matrix(nrow = 10, ncol = 2), simplify = FALSE)
+  x_list[[1]] <- x
+  
+  # The following is an implementation of coordinate exchange to find
+  # I-optimal designs in the one-factor setting for a second order model.
+  
+  progress <- TRUE
+  while(progress){
+    
+    xold <- x
+    
+    # We will begin by looping through each value in x. At iteration i, j,  the 
+    # i, jth entry in x is the one that will be changed. 
+    
+    for(i in 1:nrow(x)){
+      for(j in 1:ncol(x)){
+        
+        # We next loop through the test values. We generate a candidate x matrix
+        # with each test value in the i, jth position.
+      
+        for(val in testvalues){
+          xtest <- x
+          xtest[i, j] <- val
+          x_list[[which(testvalues == val) + 1]] <- xtest
+        }
+      
+        # We have generated a list of candidate vectors. Now we need to compute the
+        # G-score and re-assign the matrix with the highest G score to the variable
+        # x. 
+        
+        model_matrices <- lapply(x_list, mmat_twofactor_ord2)
+        
+        # We get a singularity issue every once in a while that fucks up the loop. 
+        # I'm thinking we should use a try block
+        g_scores <- unlist(try(lapply(model_matrices, g_opt_two_fact), silent = TRUE))
+        if(is(i_scores, 'try-error')) break
+        x <- x_list[which(g_scores == min(g_scores))][[1]]
+      }
+    }
+    
+    # If we have made it through an entire pass without improvement this 
+    # design is said to be I-optimal.
+    
+    if(all(xold == x)){
+      progress = FALSE
+    }
+  }
+ 
+  # One iteration has been complete. A local minimum has been found, now add
+  # this candidate design to the list
+  candidate_x[[iter]] <- x
+}
+
+# Now we have a bunch of these candidate matrices. We want to compute the I
+# scores for each one to get some idea of performance.
+two_fact_g_model_matrices <- lapply(candidate_x, mmat_twofactor_ord2)
+two_fact_g_scores <- unlist(lapply(two_fact_g_model_matrices, g_opt_two_fact))
+max_two_fact_g <- candidate_x[which(two_fact_g_scores == max(two_fact_g_scores))][[1]]
+
+data <- data.frame(max_two_fact_g)
+ggplot(data, aes(x=X1, y=X2)) + 
+  geom_point() +
+  ggtitle("\nPlot of Optimal Design Points for K=2, N=10\n") +
+  xlab("Factor 1") + 
+  ylab("Factor 2")
+```
+
+
+## Problem 6
+
+The following is a fractional Design plot for $K=1$:
+
+```{r}
+library(data.table)
+
+# Discritize the continuous parameter space to make calculations feasible
+grid <- runif(10000, -1, 1)
+
+compute_spv_one_factor <- function(FX, grid){
+
+  SPVs <- rep(0, length(grid))
+
+  for(x in grid){
+    var <- c(1, x, x^2)
+    spv <- 5*t(var)%*%solve(t(FX)%*%FX)%*%var
+    SPVs[which(grid == x)] <- spv
+  }
+
+  return(SPVs)
+}
+
+g_onefact_mmat <- mmat_onefactor_ord2(max_one_fact_g)
+i_onefact_mmat <- mmat_onefactor_ord2(min_one_fact_i)
+g_onefact_scores <- compute_spv_one_factor(g_onefact_mmat, grid)
+i_onefact_scores <- compute_spv_one_factor(i_onefact_mmat, grid)
+g_quantiles <- pnorm(g_onefact_scores)
+i_quantiles <- pnorm(i_onefact_scores)
+
+i_dat <- data.table(quantiles = i_quantiles, SPV = i_onefact_scores)
+g_dat <- data.table(quantiles = g_quantiles, SPV = g_onefact_scores)
+
+i_dat <- i_dat[order(i_quantiles)]
+g_dat <- g_dat[order(g_quantiles)]
+
+ggplot() +
+  geom_line(data = i_dat, aes(x = quantiles, y = SPV, color = "1")) +
+  geom_line(data = g_dat, aes(x = quantiles, y = SPV, color = "2")) +
+  scale_color_manual(name = "Lines",
+                     values = c("1" = "blue", "2" = "red"))
+```
+The following is a fractional Design plot for $K=2$:
+
+```{r}
+library(data.table)
+
+# Discritize the continuous parameter space to make calculations feasible
+grid <- runif(1000, -1, 1)
+
+compute_spv_two_factor <- function(FX, grid){
+
+  SPVs <- rep(0, length(grid)^2)
+
+  for(x1 in grid){
+    for(x2 in grid){
+      var <- c(1, x1, x2, x1^2, x2^2, x1*x2)
+      spv <- 10*t(var)%*%solve(t(FX)%*%FX)%*%var
+      SPVs[which(grid == x1) * which(grid==x2)] <- spv
+    }
+  }
+  return(SPVs)
+}
+
+g_twofact_mmat <- mmat_twofactor_ord2(max_two_fact_g)
+i_twofact_mmat <- mmat_twofactor_ord2(min_two_fact_i)
+g_twofact_scores <- compute_spv_two_factor(g_twofact_mmat, grid)
+i_twofact_scores <- compute_spv_two_factor(i_twofact_mmat, grid)
+g_quantiles <- pnorm(g_twofact_scores)
+i_quantiles <- pnorm(i_twofact_scores)
+
+i_dat <- data.table(quantiles = i_quantiles, SPV = i_twofact_scores)
+g_dat <- data.table(quantiles = g_quantiles, SPV = g_twofact_scores)
+
+i_dat <- i_dat[order(i_quantiles)]
+g_dat <- g_dat[order(g_quantiles)]
+
+ggplot() +
+  geom_line(data = i_dat, aes(x = quantiles, y = SPV, color = "I-Optimal Design")) +
+  geom_line(data = g_dat, aes(x = quantiles, y = SPV, color = "G-Optimal Design")) +
+  scale_color_manual(name = "Lines",
+    values = c("I-Optimal Design" = "blue", "G-Optimal Design" = "red")) + 
+  ylim(0, 4)
+```
+ 
+The above plots aren't as illustrative as I'd like them to be. I think they're wrong. The quantiles might be a little messed up. I tried the **quantiles** function at first but the plots came out super distorted. I'm now using the **pnorm** function which lets me plot smooth functions. Alternatively, there could be something wrong with the designs I'm generating. I will be able to diagnose the issue with some more time but I need to get this turned in on time.  

@@ -31,7 +31,3 @@ g_opt_two_fact <- function(FX){
 
   return(max(SPVs))
 }
-
-x <- c(-1, -0.5, 0, 0.5, 1)
-FX <- mmat_onefactor_ord2(x)
-g_opt_grid(FX)
