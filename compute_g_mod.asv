@@ -1,7 +1,7 @@
 % Compute G score for a candidate design using gloptipoly
 % -------------------------------------------------------
 
-function[SPV] = compute_g_mod(x, X_c, row, col)
+function[opt, SPV] = compute_g_mod(x, X_c, row, col)
 
     % Build x vector and constraints
     if size(X_c, 2) == 1
@@ -39,7 +39,7 @@ function[SPV] = compute_g_mod(x, X_c, row, col)
 
     % Search for optimum using gloptipoly
     P = msdp(max(f), K, 4);
-    [~, SPV] = msol(P);
+    [opt, SPV] = msol(P);
 
 end
 
