@@ -37,10 +37,14 @@ function[SPV] = compute_g_mod(x, X_c, row, col)
     % Define the polynomial
     f = size(X_c, 1)*var*inv(F.'*F)*var.';
 
-    % Search for optimum using gloptipoly
-    P = msdp(max(f), K, 4);
-    [~, SPV] = msol(P);
-
+    % If we've arrived to a singular matrix penalize
+    if det(F'*F) < eps^3.5
+        SPV = 100000;
+    else
+        % Search for optimum using gloptipoly
+        P = msdp(max(f), K, 4);
+        [~, SPV] = msol(P);
+    end
 end
 
 
