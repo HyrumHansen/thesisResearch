@@ -38,7 +38,7 @@ function[SPV] = compute_g_mod(x, X_c, row, col)
     f = size(X_c, 1)*var*inv(F.'*F)*var.';
 
     % If we've arrived to a singular matrix penalize
-    if det(F'*F) < eps^3.5
+    if det(F'*F) < eps^3.8
         SPV = 100000;
     else
         % Search for optimum using gloptipoly

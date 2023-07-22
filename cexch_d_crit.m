@@ -2,14 +2,15 @@
 % -------------------------------------------------------
 
 % Design Matrix dimensions
-N = 8;
-K = 2;
+N = 6;
+K = 1;
 
 % Set up for coordinate exchange
 iterations = 100;
 best_design = gen_mat(N, K); 
-og_design = best_design
+og_design = best_design;
 d_crit_curr = compute_d(best_design);
+efficiencies = [];
 
 for p = 1:iterations
     
@@ -18,7 +19,7 @@ for p = 1:iterations
     while execute
         X = gen_mat(N, K);
         F = x2fx(X, 'quadratic');
-        if det(F.'*F) > eps
+        if det(F.'*F) > eps^4
             execute = false;
         end
     end
@@ -26,8 +27,9 @@ for p = 1:iterations
     % Get entered into the loop
     design = 2*X;
 
-    while ~isequal(X, design)
-        
+    while ~isequal(round(X, 4, 'decimals'), round(design, 4, 'decimals'))
+    % while ~isequal(X, design) <- runs forever
+
         % Make the designs equal, should be edited in the CEXCH
         design = X;
         
@@ -38,33 +40,24 @@ for p = 1:iterations
                 % Formulate the objective
                 f = @(x)-compute_d_mod(x, X, i, j);
 
+                %options = optimset('TolX', 1e-8);
+
                 opt = fminbnd(f, -1, 1);
                 
-                % Form a new matrix with updated value
-                X_n = design;
-                X_n(i,j) = opt;
-                d_crit_n = compute_d(X_n);
+                % Update the matrix with optimal value
+                X(i,j) = opt;
 
-                % If we've arrived to a singular matrix penalize
-                F = x2fx(X_n, 'quadratic');
-                if det(F'*F) < eps^3
-                    d_crit_n = -100000;
-                end
-
-                % If new spv is better than old set new matrix
-                if d_crit_n > d_crit_curr
-                    design = X_n;
-                    d_crit_curr = d_crit_n;
-                end
             end
         end
+    end
 
-        % One full pass is complete. 
-        if compute_d(design) > compute_d(best_design)
-            best_design = design;
-            fprintf("\nUpdated_score: %i", compute_d(best_design))
-        end
-    end  
+    % One full pass is complete. 
+    if compute_d(design) > compute_d(best_design)
+        best_design = design;
+    end
+
+    D_X = 100*compute_d(design)^(1/3)/N/45.9888*100;
+    efficiencies = [efficiencies, D_X];
+    p
+    D_X
 end
-
-compute_d(best_design)

@@ -2,15 +2,15 @@
 % -------------------------------------------------------
 
 % Design Matrix dimensions
-N = 8;
+N = 10;
 K = 2;
 
 % Set up for coordinate exchange
-iterations = 5;
+iterations = 50;
 best_design = gen_mat(N, K); 
 spv_curr = compute_g(best_design);
 spvs = [];
-designs = [];
+efficiencies = [];
 
 for p = 1:iterations
     
@@ -19,7 +19,7 @@ for p = 1:iterations
     while execute
         X = gen_mat(N, K);
         F = x2fx(X, 'quadratic');
-        if det(F.'*F) > eps^3
+        if det(F.'*F) > eps^4
             execute = false;
         end
     end
@@ -27,7 +27,7 @@ for p = 1:iterations
     % Get entered into the loop
     design = 2*X;
 
-    while ~isequal(X, design)
+    while ~isequal(round(X, 4, 'decimals'), round(design, 4, 'decimals'))
         
         % Make the designs equal, should be edited in the CEXCH
         design = X;
@@ -46,16 +46,18 @@ for p = 1:iterations
 
             end
         end
+    end 
 
-        designs = [designs, X];
+    spv_n = compute_g(X);
 
-        % One full pass is complete. 
-        if compute_g(X) < compute_g(best_design)
-            best_design = X;
-            spvs = [spvs, compute_g(X)];
-        end
+    % One full pass is complete. 
+    if spv_n < compute_g(best_design)
+        best_design = X;
+    end
 
-    end  
+    spvs = [spvs, spv_n];
+    efficiencies = [efficiencies, 100*6/spv_n][]
+    
 end
 
 compute_g(best_design)

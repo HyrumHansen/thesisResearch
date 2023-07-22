@@ -1,9 +1,9 @@
 % Compute G score for a candidate design using gloptipoly
 % -------------------------------------------------------
 
-function[d_crit] = compute_d_mod(x, X_c, row, col)
+function[d_crit] = compute_d_mod_uni(x, X_c, ind)
     
-    X_c(row, col) = x;
+    X_c(ind) = x;
     F = x2fx(X_c, 'quadratic');
     d_crit = det(F.'*F);
 
