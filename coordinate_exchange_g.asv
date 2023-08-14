@@ -2,15 +2,29 @@
 % -------------------------------------------------------
 
 % Design Matrix dimensions
-N = 10;
+N = 8;
 K = 2;
 
 % Set up for coordinate exchange
-iterations = 50;
+iterations = 300;
 best_design = gen_mat(N, K); 
 spv_curr = compute_g(best_design);
-spvs = [];
-efficiencies = [];
+spvs = double.empty(iterations, 0);
+efficiencies = double.empty(iterations, 0);
+
+% Set SeDuMi parameters
+pars.fid=0;
+pars.eps=1e-10;
+mset(pars)
+
+% Set Parameters for fmincon (L-BFGS-B minimization)
+A = [];
+b = [];
+Aeq = [];
+beq = [];
+lb = -1;
+ub = 1;
+
 
 for p = 1:iterations
     
@@ -19,27 +33,29 @@ for p = 1:iterations
     while execute
         X = gen_mat(N, K);
         F = x2fx(X, 'quadratic');
-        if det(F.'*F) > eps^4
+        if det(F.'*F) > eps^3
             execute = false;
         end
     end
 
     % Get entered into the loop
     design = 2*X;
+    spv_n = 0;
 
-    while ~isequal(round(X, 4, 'decimals'), round(design, 4, 'decimals'))
+    while abs(compute_g(X) - compute_g(design)) > 0.005
+        
         
         % Make the designs equal, should be edited in the CEXCH
         design = X;
         
-        % Coordinate exchange with Brent's minimization algorithm
+        % Coordinate exchange with L-BFGS-B minimization algorithm
         for i = 1:N
             for j = 1:K
 
                 % Formulate the objective
                 f = @(x)compute_g_mod(x, X, i, j);
 
-                opt = fminbnd(f, -1, 1);
+                opt = fmincon(f, X(i, j), A, b, Aeq, beq, lb, ub);
                 
                 % Update the entry at the optimal value
                 X(i, j) = opt;
@@ -55,10 +71,7 @@ for p = 1:iterations
         best_design = X;
     end
 
-    spvs = [spvs, spv_n];
-    efficiencies = [efficiencies, 100*6/spv_n][]
+    spvs(p) = spv_n;
+    efficiencies(p) = 100*6/spv_n;
     
 end
-
-compute_g(best_design)
-spvs 

@@ -2,29 +2,30 @@
 % -------------------------------------------------------
 
 % Design Matrix dimensions
-N = 8;
-K = 2;
+N = 9;
+
+K = 1;
 
 % Set up for coordinate exchange
-iterations = 300;
+iterations =300;
 best_design = gen_mat(N, K); 
 spv_curr = compute_g(best_design);
-spvs = double.empty(iterations, 0);
-efficiencies = double.empty(iterations, 0);
+spvs = double.empty(100, 0);
+efficiencies = double.empty(100, 0);
 
 % Set SeDuMi parameters
 pars.fid=0;
 pars.eps=1e-10;
 mset(pars)
 
-% Set Parameters for fmincon (L-BFGS-B minimization)
+% Parameters for the optimizer
 A = [];
 b = [];
 Aeq = [];
 beq = [];
-lb = -1;
-ub = 1;
 
+% Leaving some space to test new features
+ind_spvs = [];
 
 for p = 1:iterations
     
@@ -33,38 +34,31 @@ for p = 1:iterations
     while execute
         X = gen_mat(N, K);
         F = x2fx(X, 'quadratic');
-        if det(F.'*F) > eps^4
+        if det(F.'*F) > eps^3
             execute = false;
         end
     end
 
     % Get entered into the loop
     design = 2*X;
-    spv_n = 0;
 
-    while abs(compute_g(X) - compute_g(design)) > 0.005
-
+    while abs(compute_g(X) - compute_g(design)) > 0.001
         
         % Make the designs equal, should be edited in the CEXCH
         design = X;
         
-        % Coordinate exchange with L-BFGS-B minimization algorithm
+        % Coordinate exchange with Brent's minimization algorithm
         for i = 1:N
-            for j = 1:K
 
-                % Formulate the objective
-                f = @(x)compute_g_mod(x, X, i, j);
+            % Formulate the objective
+            f = @(x)compute_g_mod(x, X, i);
 
-                opt = fmincon(f, X(i, j), A, b, Aeq, beq, lb, ub);
-                
-                % Update the entry at the optimal value
-                X(i, j) = opt;
+            [opt, spv_n] = fmincon(f, X(i), A, b, Aeq, beq, -1, 1);
 
-            end
+            X(i) = opt;
+
         end
     end 
-
-    spv_n = compute_g(X);
 
     % One full pass is complete. 
     if spv_n < compute_g(best_design)
@@ -72,6 +66,6 @@ for p = 1:iterations
     end
 
     spvs(p) = spv_n;
-    efficiencies(p) = 100*6/spv_n;
+    efficiencies(p) = 100*3/spv_n;
     
 end

@@ -5,9 +5,9 @@ function[SPV] = compute_g_mod(x, X_c, row, col)
 
     % Build x vector and constraints
     if size(X_c, 2) == 1
-        mpol x
-        var = [1 x x^2];
-        K = [x <= 1, -1 <= x];
+        mpol x1
+        var = [1 x1 x1^2];
+        K = [x1 <= 1, -1 <= x1];
     elseif size(X_c, 2) == 2
         mpol x1 x2
         var = [1 x1 x2 x1*x2 x1^2 x2^2];
@@ -31,14 +31,19 @@ function[SPV] = compute_g_mod(x, X_c, row, col)
     end
 
     % Pass in the latest value returned from univariate optimizer
-    X_c(row, col) = x;
+    if size(X_c, 2) == 1
+        X_c(row) = x;
+    elseif size(X_, 2) < 1
+        X_c(row, col) = x;
+    end
+
     F = x2fx(X_c, 'quadratic');
 
     % Define the polynomial
     f = size(X_c, 1)*var*inv(F.'*F)*var.';
 
     % If we've arrived to a singular matrix penalize
-    if det(F'*F) < eps^3.8
+    if det(F'*F) < eps^3
         SPV = 100000;
     else
         % Search for optimum using gloptipoly
