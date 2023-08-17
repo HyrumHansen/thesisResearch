@@ -7,10 +7,10 @@ K = 2;
 
 % Set up for coordinate exchange
 iterations = 300;
-best_design = gen_mat(N, K); 
-spv_curr = compute_g(best_design);
 spvs = double.empty(iterations, 0);
 efficiencies = double.empty(iterations, 0);
+designs = repmat({[]}, 1, iterations);
+f_evals = double.empty(iterations, 0);
 
 % Set SeDuMi parameters
 pars.fid=0;
@@ -22,27 +22,28 @@ A = [];
 b = [];
 Aeq = [];
 beq = [];
-lb = -1;
-ub = 1;
 
+% Parrallellizationing parameters
+parpool('local', maxNumCompThreads); % Start a local pool of workers
 
-for p = 1:iterations
+tic
+parfor p = 1:iterations
     
     % Continue drawing X from [-1,1] uniform until F.'F nonsingular
     execute = true;
     while execute
         X = gen_mat(N, K);
         F = x2fx(X, 'quadratic');
-        if det(F.'*F) > eps^4
+        if det(F.'*F) > eps^3
             execute = false;
         end
     end
 
     % Get entered into the loop
     design = 2*X;
-    spv_n = 0;
+    function_evaluations = 0;
 
-    while abs(compute_g(X) - compute_g(design)) > 0.005
+    while abs(compute_g(X) - compute_g(design)) > 0.001
 
         
         % Make the designs equal, should be edited in the CEXCH
@@ -55,7 +56,7 @@ for p = 1:iterations
                 % Formulate the objective
                 f = @(x)compute_g_mod(x, X, i, j);
 
-                opt = fmincon(f, X(i, j), A, b, Aeq, beq, lb, ub);
+                [opt, spv_n] = fmincon(f, X(i, j), A, b, Aeq, beq, -1, 1);
                 
                 % Update the entry at the optimal value
                 X(i, j) = opt;
@@ -64,14 +65,9 @@ for p = 1:iterations
         end
     end 
 
-    spv_n = compute_g(X);
-
-    % One full pass is complete. 
-    if spv_n < compute_g(best_design)
-        best_design = X;
-    end
-
     spvs(p) = spv_n;
     efficiencies(p) = 100*6/spv_n;
+    designs{p} = X;
     
 end
+toc

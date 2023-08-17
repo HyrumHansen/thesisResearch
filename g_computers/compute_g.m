@@ -37,7 +37,7 @@ function[obj] = compute_g(design)
     f = size(design, 1)*var*inv(F.'*F)*var.';
 
     % Search for optimum using gloptipoly
-    P = msdp(max(f), K, 4);
+    P = msdp(max(f), K, 5);
     [~, obj] = msol(P);
 
 end

@@ -3,15 +3,14 @@
 
 % Design Matrix dimensions
 N = 9;
-
 K = 1;
 
 % Set up for coordinate exchange
-iterations =300;
-best_design = gen_mat(N, K); 
-spv_curr = compute_g(best_design);
-spvs = double.empty(100, 0);
-efficiencies = double.empty(100, 0);
+iterations = 36;
+spvs = double.empty(iterations, 0);
+efficiencies = double.empty(iterations, 0);
+designs = repmat({[]}, 1, iterations);
+f_evals = double.empty(iterations, 0);
 
 % Set SeDuMi parameters
 pars.fid=0;
@@ -24,10 +23,13 @@ b = [];
 Aeq = [];
 beq = [];
 
-% Leaving some space to test new features
-ind_spvs = [];
+parpool('local', 18); % Start a local pool of workers
 
-for p = 1:iterations
+tic
+parfor p = 1:iterations
+
+    % Need to do this to make parrallelizable
+    spv_n = 100;
     
     % Continue drawing X from [-1,1] uniform until F.'F nonsingular
     execute = true;
@@ -41,6 +43,7 @@ for p = 1:iterations
 
     % Get entered into the loop
     design = 2*X;
+    function_evaluations = 0;
 
     while abs(compute_g(X) - compute_g(design)) > 0.001
         
@@ -60,12 +63,10 @@ for p = 1:iterations
         end
     end 
 
-    % One full pass is complete. 
-    if spv_n < compute_g(best_design)
-        best_design = X;
-    end
-
     spvs(p) = spv_n;
     efficiencies(p) = 100*3/spv_n;
+    designs{p} = X;
+
     
 end
+toc
