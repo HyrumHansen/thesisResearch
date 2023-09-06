@@ -1,7 +1,7 @@
 % Compute G score using a grid approximation
 % ------------------------------------------
 
-function[g_eff] = compute_g_grid(F, num_var)
+function[g_score] = compute_g_grid(F, num_var)
 
     grid = -1:.01:1;
 
@@ -37,6 +37,6 @@ function[g_eff] = compute_g_grid(F, num_var)
     end
 
     % Return the G efficiency of the design
-    g_eff = 100*size(F, 2)/max(grid_scores);
+    g_score = max(grid_scores);
 
 end
