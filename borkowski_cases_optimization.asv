@@ -10,7 +10,7 @@ b = [];
 Aeq = [];
 beq = [];
 
-for scenario = 5:21
+for scenario = 1:21
     % Loop it and store the data
     iterations = 500;
     
@@ -39,14 +39,8 @@ for scenario = 5:21
             
             % Handles the edge cases
             if size(F, 1) == N
-                if K == 3
-                    if rcond(F.'*F) > eps^(1/5)
-                        execute = false;
-                    end
-                else 
-                    if rcond(F.'*F) > eps^(1/10)
-                        execute = false;
-                    end
+                if rcond(F.'*F) > eps^(1/10)
+                execute = false;
                 end
     
             % Handles the primary cases
@@ -92,7 +86,7 @@ for scenario = 5:21
     str_data = sprintf('borkowski_cases/K=%d_N=%d.csv', K, N);
     str_designs = sprintf('borkowski_cases/designs/K=%d_N=%d_designs.csv', K, N);
     writetable(data, str_data)
-    csvwrite(str_designs, designs)
+    csvwrite(str_designs, X_store)
     delete(gcp('nocreate'))
 end
 
