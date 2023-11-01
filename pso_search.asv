@@ -1,0 +1,26 @@
+% Set up parameters
+iterations = 1000;
+num_particles = 150;
+
+% Design Scenario
+N = 8;
+K = 2;
+model = 'quadratic';
+
+% Constraints (|x| < 1 for all x)
+lb = -ones(N*K, 1);
+ub = ones(N*K, 1);
+
+% Try surrogate optimization
+x = optimvar("x", 1, N*K);
+x.LowerBound = -1;
+x.UpperBound = 1;
+
+% To make an initial point
+x0.x = reshape(gen_mat(N, K), [], 1);
+
+% Set the objective function
+fun = fcn2optimexpr(@compute_g_surrogate, x);
+prob = optimproblem("Objective",fun);
+rng default % For reproducibility
+[sol,fval] = solve(prob, x0, "Solver","simulannealbnd");
