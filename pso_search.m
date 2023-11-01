@@ -1,5 +1,5 @@
 parpool('local')
-iterations = 140;
+iterations = 15;
 
 % Empty Slates
 run = double.empty(iterations, 0);
@@ -27,12 +27,24 @@ for i = 1:iterations
     % Store my data
     run(i) = i;
     spvs(i) = fval;
-    f_evals(i) = output.funcCount; 
-    X_current = reshape(x_optimal, N, K);
+    X_current = reshape(x, N, K);
+    
+        % Needed to store the designs
+        X_store = [];
+        for col = 1:K
+            my_col = [];
+            for row = 1:N
+                my_col = [my_col X_current(row, col)];
+            end
+            X_store = [X_store; my_col];
+        end
+        
+    % Finally to store the designs
+    designs{i} = X_store.';
 
 end
 
-data = table(run(:), spvs(:), f_evals(:));
+data = table(run(:), spvs(:));
 str_data = sprintf('pso_data/K=%d_N=%d.csv', K, N);
 str_designs = sprintf('pso_data/K=%d_N=%d_designs.csv', K, N);
 writetable(data, str_data)
