@@ -7,16 +7,16 @@ spvs = double.empty(iterations, 0);
 designs = repmat({[]}, 1, iterations);
 f_evals = double.empty(iterations, 0);
 
-for i = 1:iterations
+% Design Scenario
+N = 11;
+K = 3;
+model = 'quadratic';
 
-    % Design Scenario
-    N = 9;
-    K = 2;
-    model = 'quadratic';
-    
-    % Constraints (|x| < 1 for all x)
-    lb = -ones(N*K, 1);
-    ub = ones(N*K, 1);
+% Constraints (|x| < 1 for all x)
+lb = -ones(N*K, 1);
+ub = ones(N*K, 1);
+
+for i = 1:iterations
     
     % Set the objective function
     f = @(x)compute_g_pso(x, N, K);
