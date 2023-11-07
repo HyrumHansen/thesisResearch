@@ -8,7 +8,8 @@ designs = repmat({[]}, 1, iterations);
 f_evals = double.empty(iterations, 0);
 
 % Design Scenario
-N = 11;
+N = 14
+;
 K = 3;
 model = 'quadratic';
 
