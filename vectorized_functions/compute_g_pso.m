@@ -36,7 +36,7 @@ function[SPV] = compute_g_pso(design, trials, num_var)
     % Evaluate G-score on matrix
     F = x2fx(X, 'quadratic');
 
-     if det(F.'*F) < eps^(1/2)
+     if det(F.'*F) < eps^(1/10)
         SPV = 500;
      else
         % Define the polynomial

@@ -8,9 +8,8 @@ designs = repmat({[]}, 1, iterations);
 f_evals = double.empty(iterations, 0);
 
 % Design Scenario
-N = 14
-;
-K = 3;
+N = 10;
+K = 2;
 model = 'quadratic';
 
 % Constraints (|x| < 1 for all x)

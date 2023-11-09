@@ -1,9 +1,15 @@
-% Set up parameters
-iterations = 1000;
-num_particles = 150;
+parpool('local')
+iterations = 15;
+
+% Empty Slates
+run = double.empty(iterations, 0);
+spvs = double.empty(iterations, 0);
+designs = repmat({[]}, 1, iterations);
+f_evals = double.empty(iterations, 0);
 
 % Design Scenario
-N = 8;
+N = 6
+;
 K = 2;
 model = 'quadratic';
 
@@ -11,16 +17,40 @@ model = 'quadratic';
 lb = -ones(N*K, 1);
 ub = ones(N*K, 1);
 
-% Try surrogate optimization
-x = optimvar("x", 1, N*K);
-x.LowerBound = -1;
-x.UpperBound = 1;
+for i = 1:iterations
+    
+    % Set the objective function
+    f = @(x)compute_g_pso(x, N, K);
+    options = optimoptions('particleswarm','SwarmSize', 150,'UseParallel',true);
+    
+    [x, fval] = particleswarm(f, N*K, lb, ub, options);
 
-% To make an initial point
-x0.x = reshape(gen_mat(N, K), [], 1);
+    % Store my data
+    run(i) = i;
+    spvs(i) = fval;
+    X_current = reshape(x, N, K);
+    
+        % Needed to store the designs
+        X_store = [];
+        for col = 1:K
+            my_col = [];
+            for row = 1:N
+                my_col = [my_col X_current(row, col)];
+            end
+            X_store = [X_store; my_col];
+        end
+        
+    % Finally to store the designs
+    designs{i} = X_store.';
 
-% Set the objective function
-fun = fcn2optimexpr(@compute_g_surrogate, x);
-prob = optimproblem("Objective",fun);
-rng default % For reproducibility
-[sol,fval] = solve(prob, x0, "Solver","simulannealbnd");
+end
+
+data = table(run(:), spvs(:));
+str_data = sprintf('pso_data/K=%d_N=%d.csv', K, N);
+str_designs = sprintf('pso_data/K=%d_N=%d_designs.csv', K, N);
+writetable(data, str_data)
+csvwrite(str_designs, designs)
+delete(gcp('nocreate'))
+
+
+
