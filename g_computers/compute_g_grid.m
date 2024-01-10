@@ -1,9 +1,11 @@
 % Compute G score using a grid approximation
 % ------------------------------------------
 
-function[g_score] = compute_g_grid(F, num_var)
+function[g_score] = compute_g_grid(X)
 
-    grid = -1:.01:1;
+    grid = -1:.5:1;
+    F = x2fx(X, 'quadratic');
+    num_var = size(X, 2);
 
     % Expand the grid
     C = cell(num_var, 1);

@@ -1,6 +1,6 @@
 parpool('local')
-iterations = 15;
-
+iterations = 20;
+tic
 % Empty Slates
 run = double.empty(iterations, 0);
 spvs = double.empty(iterations, 0);
@@ -8,8 +8,8 @@ designs = repmat({[]}, 1, iterations);
 f_evals = double.empty(iterations, 0);
 
 % Design Scenario
-N = 10;
-K = 2;
+N = 15;
+K = 4;
 model = 'quadratic';
 
 % Constraints (|x| < 1 for all x)
@@ -50,6 +50,6 @@ str_designs = sprintf('pso_data/K=%d_N=%d_designs.csv', K, N);
 writetable(data, str_data)
 csvwrite(str_designs, designs)
 delete(gcp('nocreate'))
-
+toc
 
 
