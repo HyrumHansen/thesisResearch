@@ -9,21 +9,17 @@ fvals = double.empty(iterations, 0);
 run = double.empty(iterations, 0);
 
 % Design Scenario
-N = 15;
-K = 3;
-model = [0 0 0;
-         1 0 0;
-         0 1 0;
-         0 0 1;
-         2 0 0;
-         0 2 0;
-         0 0 2;
-         3 0 0;
-         0 3 0;
-         0 0 3;
-         4 0 0;
-         0 4 0;
-         0 0 4];
+N = 12;
+K = 2;
+model = [0 0;
+         1 0;
+         0 1;
+         2 0;
+         0 2;
+         3 0;
+         0 3;
+         4 0;
+         0 4];
 
 % parameters must be set
 A = [];
@@ -45,7 +41,7 @@ parfor i=1:iterations
         'Algorithm', 'interior-point','OutputFcn', @outputFcn_global);
     
     % Try fmincon
-    f = @(x)gloptipoly_k3_quartic(x, N, K);
+    f = @(x)gloptipoly_k2_quartic(x, N, K);
     [x_optimal, fval, exitflag, output] = fmincon(f, x0, A, b, Aeq, beq, lb, ub, [], options);
     
     % Finally to store the designs
@@ -57,5 +53,5 @@ toc
 
 % Write the table to a CSV file
 data = table(run(:), fvals(:));
-csvwrite("higher_order_data/gloptipoly_k3n15_quartic_designs.csv", designs)
-writetable(data, 'higher_order_data/gloptipoly_k3n15_quartic.csv');
+csvwrite("higher_order_data/gloptipoly_k2n11_quartic_designs.csv", designs)
+writetable(data, 'higher_order_data/gloptipoly_k2n11_quartic.csv');
