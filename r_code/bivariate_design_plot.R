@@ -6,9 +6,9 @@ library(viridis)
 library(raster)
 
 k9 <- read.csv("extension_functions/higher_order_data/gloptipoly_k2n9_cubic.csv")
-k10 <- read.csv("extension_functions/higher_order_data/gloptipoly_k2n10_cubic.csv")
+k12 <- read.csv("extension_functions/higher_order_data/gloptipoly_k2n12_quartic.csv")
 k9_designs <- read.csv("extension_functions/higher_order_data/gloptipoly_k2n9_cubic_designs.csv", header = FALSE)
-k10_designs <- read.csv("extension_functions/higher_order_data/gloptipoly_k2n10_cubic_designs.csv", header = FALSE)
+k12_designs <- read.csv("extension_functions/higher_order_data/gloptipoly_k2n12_quartic_designs.csv", header = FALSE)
 
 which.min(k9$Var2) # Index Number 31
 min(k9$Var2) # Max SPV of 11.56
@@ -22,15 +22,13 @@ k9_opt <- matrix(
   byrow = FALSE
 )
 
-which.min(k10$Var2) # Index Number 46
-min(k10$Var2) # Max SPV of 10.09
-unlist(k10_designs[901:920])
-k10_opt <- matrix(
-  c(
-    c(0.975580, -0.689420,  0.998620, -0.026761, -0.997480,  0.719510, -0.995980, -0.677990,  0.781970,  0.039423),
-    c(0.998170, -0.338210, -0.957370, -0.995000, -0.958000, -0.367890,  0.966760,  0.424890,  0.420230,  0.992130)),
+which.min(k12$Var2) # Index Number 48
+min(k12$Var2) # Max SPV of 13.84171
+unname(unlist(k12_designs[1129:1152]))
+k12_opt <- matrix(
+  unname(unlist(k12_designs[1129:1152])),
   ncol = 2,
-  nrow = 10,
+  nrow = 12,
   byrow = FALSE
 )
 
@@ -53,6 +51,16 @@ k10_cubic <- function(x1, x2){
   return(10*x_vec%*%solve(t(mm)%*%mm)%*%x_vec)
 }
 
+k12_quartic <- function(x1, x2){
+  mm <- matrix(c(rep(1, 12), k12_opt[,1], k12_opt[,2],
+                 k12_opt[,1]^2, k12_opt[,2]^2,
+                 k12_opt[,1]^3, k12_opt[,2]^3,
+                 k12_opt[,1]^4, k12_opt[,2]^4),
+               nrow = 12, ncol = 9, byrow = FALSE)
+  x_vec <- c(1, x1, x2, x1^2, x2^2, x1^3, x2^3, x1^4, x2^4)
+  return(12*x_vec%*%solve(t(mm)%*%mm)%*%x_vec)
+}
+
 # Generates the plotting data given any polynomial
 data_generator <- function(polynomial, interval){
   sequence <- seq(-1, 1, interval)
@@ -61,7 +69,7 @@ data_generator <- function(polynomial, interval){
   return(data)
 }
 
-data <- data_generator(k10_cubic, 0.01)
+data <- data_generator(k12_quartic, 0.01)
 
 grid_points <- expand.grid(x1 = c(-1, -0.5, 0, 0.5, 1),
                            x2 = c(-1, -0.5, 0, 0.5, 1))
@@ -79,10 +87,10 @@ grid_points
 
 ggplot(data = data, aes(x = Var1, y = Var2, fill = spv)) +
   geom_tile() +
-  scale_fill_viridis(option="G", limits = c(3, 12)) +  # Color gradient
+  scale_fill_viridis(option="G", limits = c(3, 18)) +  # Color gradient
 
   ### Put the legend for this plot on the bottom!
-  labs(title = "Cubic RSM Model, K=2, N=10") +
+  labs(title = "Quartic RSM Model, K=2, N=12") +
   xlab("Factor 1")+ylab("Factor 2")+
   scale_x_continuous(breaks = seq(-1, 1, by = 0.5)) +
   scale_y_continuous(breaks = seq(-1, 1, by = 0.5)) +
@@ -106,4 +114,3 @@ ggplot(data = data, aes(x = Var1, y = Var2, fill = spv)) +
 #theme(axis.text = element_blank(),
 #     axis.title = element_blank(),
 #    axis.ticks = element_blank())
-

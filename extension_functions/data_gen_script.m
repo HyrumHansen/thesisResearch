@@ -9,7 +9,7 @@ fvals = double.empty(iterations, 0);
 run = double.empty(iterations, 0);
 
 % Design Scenario
-N = 12;
+N = 11;
 K = 2;
 model = [0 0;
          1 0;
