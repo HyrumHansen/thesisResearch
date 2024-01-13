@@ -44,6 +44,7 @@ approximate_g <- function(my_design){
   mm <- matrix(c(rep(1, 10), my_design[,1], my_design[,2],
                  my_design[,1]*my_design[,2], my_design[,1]^2, my_design[,2]^2),
                nrow = 10, ncol = 6, byrow = FALSE)
+
   sequence <- seq(-1, 1, 0.5)
   evaluation_data <- expand.grid(sequence, sequence)
   spvs <- apply(evaluation_data, 1, function(row) compute_spv(row[1], row[2], mm))
@@ -52,6 +53,8 @@ approximate_g <- function(my_design){
 
 # To store the data we are about to gather:
 data = list()
+
+# Builds a list of 100 data.frames (all collected data)
 for (j in 1:100){
   filename <- sprintf("k2n10_trial%d.csv", j)
   curr_data <- read.csv(filename)
@@ -78,9 +81,7 @@ for (i in 1:100){
   avg_error[i] <- mean(unname(unlist(data[[i]]['absolute.error'])))
 }
 
-# Average error boxplot
-# Create a boxplot using ggplot2 for the third column (Column3)
-# Create a boxplot using ggplot2
+# Boxplot for error
 ggplot() +
   geom_boxplot(aes(y = avg_error), color = "blue") +
   labs(title = "Boxplot of Average Approximation Error",
@@ -88,6 +89,35 @@ ggplot() +
   theme(axis.text.x = element_blank(),
         axis.ticks.x = element_blank())
 
+# Now to plot error across all runs of Nelder-Mead
 
+# Find the maximum length among all data.frames
+errors <- list()
+for (i in 1:100){
+  errors[[i]] <- unname(unlist(data[[i]]['absolute.error']))
+}
 
+max_length <- max(sapply(errors, length))
+average_values <- numeric(max_length)
 
+# Now get the average at each time step
+for (i in 1:max_length) {
+  values <- sapply(errors, function(vec) {
+    if (i <= length(vec)) {
+      vec[i]
+    } else {
+      NA  # If the ith observation doesn't exist in a vector
+    }
+  })
+  average_values[i] <- mean(values, na.rm = TRUE)
+}
+
+# Create a data frame with the list of numbers
+data_df <- data.frame(x = 1:length(average_values), y = average_values)
+
+# Create a line plot with a blue line
+ggplot(data_df, aes(x, y)) +
+  geom_line(color = "blue", linewidth = 1.2) +
+  labs(title = "Average Absolute Error at Each Nelder-Mead Iteration",
+       x = "Time Step",
+       y = "Average Absolute Error")
