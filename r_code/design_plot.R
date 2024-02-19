@@ -1,54 +1,82 @@
-walsh_data <- read.csv("C:/Users/Hyrum Hansen/Documents/thesisResearch/walsh_data.csv")
-designs <- read.csv("C:/Users/Hyrum Hansen/Downloads/k2n7_pso.csv", header=FALSE)
+library(ggplot2)
+library(ggforce)
+library(tidyverse)
+library(viridis)
+library(raster)
 
-which.min(data$Var2)
-#design <- designs[,25:26]
-design <- matrix(c(0.9999999993089373, -0.6125262285631338, 0.9999560209028107,
-                   0.9248716818163063, 0.02579112530493838, 0.7724882023644585, 
-                   -1.0, 1.0, -0.7738216286478816, -0.03485346832916485,
-                   -0.9523909201350965, -1.0, 0.5943031952945398, -0.9999999754292527),
-                   byrow = TRUE, ncol=2)
+setwd("C:/Users/Hyrum Hansen/Documents/thesis/thesisResearch")
+#data <- read.csv("borkowski_cases/K=2_N=11.csv")
+#designs <- read.csv("borkowski_cases/designs/K=2_N=11_designs.csv", header=FALSE)
+data <- read.csv("extension_functions/higher_order_data/gloptipoly_k2n12_quartic.csv")
+designs <- read.csv("extension_functions/higher_order_data/gloptipoly_k2n12_quartic_designs.csv", header = FALSE)
 
+spvs <- data$Var2
+location = which.min(spvs) #270
+spvs[location]
 
+n=12
+num_entries <- n*2
 
-# Walsh K2 N9 design
-k2n9_walsh <- function(x1, x2){
-  output <- 7.4777-0.12438*x1-0.035237*x2-7.7536*x1^2+1.1467*x1*x2-8.0111*x2^2+0.12439*x1^3-0.033192*x1^2*x2+0.20596*x1*x2^2+0.035238*x2^3+7.7536*x1^4-0.71322*x1^3*x2-0.26839*x1^2*x2^2-0.46276*x1*x2^3+8.0111*x2^4
-  return(output)
+design <- designs[((location-1)*num_entries+1) : (location*num_entries)]
+#design <- designs[1 : 18]
+design <- matrix(unname(unlist(design)), byrow = FALSE, ncol=2)
+
+k2_quadratic <- function(x1, x2){
+  mm <- matrix(c(rep(1, n), design[,1], design[,2],
+                 design[,1]*design[,2],
+                 design[,1]^2, design[,2]^2),
+               nrow = n, ncol = 6, byrow = FALSE)
+  x_vec <- c(1, x1, x2, x1*x2, x1^2, x2^2)
+  return(n*x_vec%*%solve(t(mm)%*%mm)%*%x_vec)
 }
 
-k2n9_generator <- function(x1, x2){
-  output <- 7.5724+0.44843*x1-0.25712*x2-7.5147*x1^2-1.0301*x1*x2-8.5573*x2^2+0.12176*x1^3+1.0204*x1^2*x2-0.56776*x1*x2^2-0.76574*x2^3+6.9499*x1^4+0.6059*x1^3*x2+1.4986*x1^2*x2^2+0.51859*x1*x2^3+7.5381*x2^4
-  return(output)
+k2_cubic <- function(x1, x2){
+  mm <- matrix(c(rep(1, n), design[,1], design[,2],
+                 design[,1]*design[,2],
+                 design[,1]^2, design[,2]^2,
+                 design[,1]^3, design[,2]^3),
+               nrow = n, ncol = 8, byrow = FALSE)
+  x_vec <- c(1, x1, x2, x1*x2, x1^2, x2^2, x1^3, x2^3)
+  return(n*x_vec%*%solve(t(mm)%*%mm)%*%x_vec)
+}
+
+k2_quartic <- function(x1, x2){
+  mm <- matrix(c(rep(1, n), design[,1], design[,2],
+                 design[,1]^2, design[,2]^2,
+                 design[,1]^3, design[,2]^3,
+                 design[,1]^4, design[,2]^4),
+               nrow = n, ncol = 9, byrow = FALSE)
+  x_vec <- c(1, x1, x2, x1^2, x2^2, x1^3, x2^3, x1^4, x2^4)
+  return(n*x_vec%*%solve(t(mm)%*%mm)%*%x_vec)
 }
 
 # Generates the plotting data given any polynomial
 data_generator <- function(polynomial, interval){
   sequence <- seq(-1, 1, interval)
   data <- expand.grid(sequence, sequence)
-  data$spv <- polynomial(data[,1], data[,2])
+  data$spv <- apply(data, 1, function(row) polynomial(row[1], row[2]))
   return(data)
 }
 
 # Generate the data for this case
-k2n9_data <- data_generator(k2n9_walsh, 0.01)
+data <- data_generator(k2_quartic, 0.01)
 design_points <- data.frame(x1 = design[,1],
                             x2 = design[,2])
-design_points$spv <- rep(3, 7)
+design_points$spv <- rep(3, n)
 
 
-ggplot(data = k2n9_data, aes(x = Var1, y = Var2, fill = spv)) +
+ggplot(data = data, aes(x = Var1, y = Var2, fill = spv)) +
   geom_tile() +
-  scale_fill_viridis(option="G", limits=c(2.9, 8)) +  # Color gradient
-  
+  scale_fill_viridis(option="G", limits=c(4, 17)) +  # Color gradient
+
   ### Put the legend for this plot on the bottom!
-  labs(title = "SPV Surface and Experimental Design Points for\nWalsh (2022) Proposed Design, K=2, N=7") +
+  labs(title = "Quartic Model, K=2, N=12") +
   xlab("Factor 1 Level")+ylab("Factor 2 Level")+
   scale_x_continuous(breaks = seq(-1, 1, by = 0.5)) +
   scale_y_continuous(breaks = seq(-1, 1, by = 0.5)) +
   # Can make a vector outside the original dataset that has some information
   # about points to be plotted...
-  geom_point(data = design_points, 
+  geom_point(data = design_points,
              aes(x = x1, y = x2, color="red"), size = 3.5, show.legend = FALSE,
              pch=21, stroke = 1.5, fill = "yellow2") +
   scale_color_manual(values = c("red", "red")) +

@@ -75,6 +75,10 @@ for (j in 1:100){
                           'absolute error' = error)
 }
 
+# Line plot for the first one
+
+
+
 # To store the average error across all time steps
 avg_error <- rep(0, 100)
 for (i in 1:100){
@@ -88,8 +92,15 @@ ggplot() +
        y = "Absolute Error") +
   theme(axis.text.x = element_blank(),
         axis.ticks.x = element_blank())
+df_one <- data.frame(x = 1:length(data[[1]]$absolute.error), y = data[[1]]$absolute.error)
 
 # Now to plot error across all runs of Nelder-Mead
+ggplot(df_one, aes(x, y)) +
+  geom_line(color = "blue", linewidth = 1.2) +
+  labs(title = "Absolute Error Over Time",
+       x = "Nelder-Mead Iteration",
+       y = "Absolute Error")
+
 
 # Find the maximum length among all data.frames
 errors <- list()
@@ -119,5 +130,5 @@ data_df <- data.frame(x = 1:length(average_values), y = average_values)
 ggplot(data_df, aes(x, y)) +
   geom_line(color = "blue", linewidth = 1.2) +
   labs(title = "Average Absolute Error at Each Nelder-Mead Iteration",
-       x = "Time Step",
+       x = "Nelder-Mead Iteration",
        y = "Average Absolute Error")

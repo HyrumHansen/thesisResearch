@@ -7,18 +7,20 @@ spvs = double.empty(iterations, 0);
 designs = repmat({[]}, 1, iterations);
 f_evals = double.empty(iterations, 0);
 
+
 % Design Scenario
 N = 15;
-K = 4;
+K = 3;
 model = 'quadratic';
 
 % Constraints (|x| < 1 for all x)
 lb = -ones(N*K, 1);
 ub = ones(N*K, 1);
 
-for i = 1:iterations
+
     
     % Set the objective function
+
     f = @(x)compute_g_pso(x, N, K);
     options = optimoptions('particleswarm','SwarmSize', 150,'UseParallel',true);
     
@@ -27,6 +29,7 @@ for i = 1:iterations
     % Store my data
     run(i) = i;
     spvs(i) = fval;
+    
     X_current = reshape(x, N, K);
     
         % Needed to store the designs
@@ -43,6 +46,7 @@ for i = 1:iterations
     designs{i} = X_store.';
 
 end
+toc
 
 data = table(run(:), spvs(:));
 str_data = sprintf('pso_data/K=%d_N=%d.csv', K, N);
@@ -50,6 +54,6 @@ str_designs = sprintf('pso_data/K=%d_N=%d_designs.csv', K, N);
 writetable(data, str_data)
 csvwrite(str_designs, designs)
 delete(gcp('nocreate'))
-toc
+
 
 
