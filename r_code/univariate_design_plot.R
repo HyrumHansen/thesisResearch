@@ -59,9 +59,17 @@ ggplot(k5_data, aes(x = x, y = SPV)) +
              pch=21, stroke = 1.5, fill = "yellow2") +
   scale_color_manual(values = c("red", "red")) +
   # Add any additional styling or customization as needed
-  labs(title = "SPV Surface for K=1, N=6 Cubic RSM Model",
+  labs(title = "",
        x = "X",
-       y = "SPV")
+       y = "SPV")+
+  theme(
+    axis.title.x = element_text(size = 20),
+    axis.title.y = element_text(size = 20),
+    axis.text.x = element_text(size = 16),
+    axis.text.y = element_text(size = 16),
+    plot.title = element_text(size = 20)
+  )
+
 
 
 

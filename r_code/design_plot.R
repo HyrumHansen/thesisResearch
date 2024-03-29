@@ -5,20 +5,23 @@ library(viridis)
 library(raster)
 
 setwd("C:/Users/Hyrum Hansen/Documents/thesis/thesisResearch")
-#data <- read.csv("borkowski_cases/K=2_N=11.csv")
-#designs <- read.csv("borkowski_cases/designs/K=2_N=11_designs.csv", header=FALSE)
-data <- read.csv("extension_functions/higher_order_data/gloptipoly_k2n12_quartic.csv")
-designs <- read.csv("extension_functions/higher_order_data/gloptipoly_k2n12_quartic_designs.csv", header = FALSE)
+data <- read.csv("borkowski_cases/K=2_N=8.csv")
+designs <- read.csv("borkowski_cases/designs/K=2_N=8_designs.csv", header=FALSE)
+data <- read.csv("point_exchange/data/k2n8_pexch_mod_efficiencies.csv")
+designs <- read.csv("point_exchange/data/k2n8_pexch_mod_designs.csv", header = FALSE)
 
-spvs <- data$Var2
+#designs <- read.csv("error_quantification_data/k2n10_trial36.csv", header = FALSE)
+
+spvs <- data$Var2[data$Var2 != 0]
 location = which.min(spvs) #270
 spvs[location]
+design <- designs[(location*2-1):(location*2)]
 
-n=12
+n=8
 num_entries <- n*2
 
-design <- designs[((location-1)*num_entries+1) : (location*num_entries)]
-#design <- designs[1 : 18]
+#design <- designs[((location-1)*num_entries+1) : (location*num_entries)]
+#design <- as.numeric(designs[33,1 : 20])
 design <- matrix(unname(unlist(design)), byrow = FALSE, ncol=2)
 
 k2_quadratic <- function(x1, x2){
@@ -59,7 +62,7 @@ data_generator <- function(polynomial, interval){
 }
 
 # Generate the data for this case
-data <- data_generator(k2_quartic, 0.01)
+data <- data_generator(k2_quadratic, 0.01)
 design_points <- data.frame(x1 = design[,1],
                             x2 = design[,2])
 design_points$spv <- rep(3, n)
@@ -67,10 +70,10 @@ design_points$spv <- rep(3, n)
 
 ggplot(data = data, aes(x = Var1, y = Var2, fill = spv)) +
   geom_tile() +
-  scale_fill_viridis(option="G", limits=c(4, 17)) +  # Color gradient
+  scale_fill_viridis(option="G", limits=c(2, 7)) +  # Color gradient
 
   ### Put the legend for this plot on the bottom!
-  labs(title = "Quartic Model, K=2, N=12") +
+  labs(title = "") +
   xlab("Factor 1 Level")+ylab("Factor 2 Level")+
   scale_x_continuous(breaks = seq(-1, 1, by = 0.5)) +
   scale_y_continuous(breaks = seq(-1, 1, by = 0.5)) +
@@ -79,6 +82,14 @@ ggplot(data = data, aes(x = Var1, y = Var2, fill = spv)) +
   geom_point(data = design_points,
              aes(x = x1, y = x2, color="red"), size = 3.5, show.legend = FALSE,
              pch=21, stroke = 1.5, fill = "yellow2") +
-  scale_color_manual(values = c("red", "red")) +
-  theme(legend.position="bottom")
+  scale_color_manual(values = c("red", "red"))+
+  theme_minimal() +
+  theme(
+    legend.position="bottom",
+    legend.key.width = unit(1.5, "cm"),
+    axis.title.x = element_text(size = 16),
+    axis.text.x = element_text(size = 12),
+    axis.title.y = element_text(size = 16),
+    plot.title = element_text(size = 20)
+  )
 

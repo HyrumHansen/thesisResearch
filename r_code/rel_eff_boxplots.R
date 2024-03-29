@@ -39,11 +39,16 @@ ggplot(data = melt(k1_efficiencies),
   geom_boxplot(color = 'blue',
                outlier.color="black",
                alpha = 0.4) +
-  ggtitle("Efficiencies relative to G-PSO for 500 runs of Nelder-Mead") +
+  ggtitle("Distribution of Relative Efficiencies, One-Factor Designs") +
   theme(legend.position="none") +
   geom_hline(yintercept = 100, color = 'red') +
   xlab("Number of Trials") +
-  ylab("Relative Efficiency (%)")
+  ylab("Relative Efficiency (%)")+
+  theme(
+    axis.title.x = element_text(size = 16),
+    axis.title.y = element_text(size = 16),
+    plot.title = element_text(size = 20)
+  )
 
 ##################################################################
 #K=2
@@ -80,11 +85,16 @@ ggplot(data = melt(k2_efficiencies),
   geom_boxplot(color = 'blue',
                outlier.color="black",
                alpha = 0.4) +
-  ggtitle("Efficiencies relative to G-PSO for 500 runs of Nelder-Mead") +
+  ggtitle("Distribution of Relative Efficiencies, Two-Factor Designs") +
   theme(legend.position="none") +
   geom_hline(yintercept = 100, color = 'red')+
   xlab("Number of Trials") +
-  ylab("Relative Efficiency (%)")
+  ylab("Relative Efficiency (%)")+
+  theme(
+    axis.title.x = element_text(size = 16),
+    axis.title.y = element_text(size = 16),
+    plot.title = element_text(size = 20)
+  )
 
 ##################################################################
 #K=3
@@ -121,8 +131,13 @@ ggplot(data = melt(k3_efficiencies),
   geom_boxplot(color = 'blue',
                outlier.color="black",
                alpha = 0.4) +
-  ggtitle("Efficiencies relative to G-PSO for 500 runs of Nelder-Mead") +
+  ggtitle("Distribution of Relative Efficiencies, Three-Factor Designs") +
   theme(legend.position="none") +
   geom_hline(yintercept = 100, color = 'red')+
   xlab("Number of Trials") +
-  ylab("Relative Efficiency (%)")
+  ylab("Relative Efficiency (%)")+
+  theme(
+    axis.title.x = element_text(size = 16),
+    axis.title.y = element_text(size = 16),
+    plot.title = element_text(size = 20)
+  )

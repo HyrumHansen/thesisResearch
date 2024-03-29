@@ -5,12 +5,9 @@ library(tidyverse)
 library(viridis)
 library(raster)
 
-walsh_data <- read.csv("C:/Users/Hyrum Hansen/Documents/thesisResearch/walsh_data.csv")
+walsh_data <- read.csv("C:/Users/Hyrum Hansen/Documents/thesis/thesisResearch/walsh_data.csv")
 
 data <- read.csv("extension_functions/higher_order_interaction_data/gloptipoly_k2n9.csv")
-
-which.min(data$Var2)
-designs[,175:176]
 
 newdata <- function(x1, x2){
   # output <- 7.176-0.00090306*x1-0.0036827*x2-4.8143*x1^2-0.0021569*x1*x2-7.0279*x2^2+0.0008749*x1^3-0.11978*x1^2*x2-0.00089081*x1*x2^2+0.62264*x2^3+5.4149*x1^4-0.0033561*x1^3*x2-5.1694*x1^2*x2^2+0.0083398*x1*x2^3+5.8129*x2^4+0.0022603*x1^3*x2^2-0.49339*x1^2*x2^3-0.0041706*x1*x2^4+6.3789*x1^2*x2^4
@@ -64,7 +61,8 @@ data_generator <- function(polynomial, interval){
 }
 
 # Generate the data for this case
-k2n9_data <- data_generator(k2n9_generator, 0.01)
+k2n9_data <- data_generator(k2n8_generator, 0.01)
+#k2n9_data$spv <- log(k2n9_data$spv)
 grid_points <- expand.grid(x1 = c(-1, -0.5, 0, 0.5, 1),
                       x2 = c(-1, -0.5, 0, 0.5, 1))
 grid_points$spv <- rep(3, 25)
@@ -83,7 +81,7 @@ ggplot(data = k2n9_data, aes(x = Var1, y = Var2, fill = spv)) +
   scale_fill_viridis(option="G") +  # Color gradient
 
   ### Put the legend for this plot on the bottom!
-  labs(title = "G-Optimal Design of Walsh & Borkowski (2022), K=2, N=9") +
+  labs(title = "G-Optimal Design of Walsh & Borkowski") +
   xlab("Factor 1")+ylab("Factor 2")+
   scale_x_continuous(breaks = seq(-1, 1, by = 0.5)) +
   scale_y_continuous(breaks = seq(-1, 1, by = 0.5)) +
@@ -102,7 +100,16 @@ ggplot(data = k2n9_data, aes(x = Var1, y = Var2, fill = spv)) +
              stroke=2.5)+
 
   scale_color_manual(values = c("red", "red"))+
-  theme(legend.position="bottom", legend.key.width = unit(1.5, "cm"))
+  theme_minimal() +
+  theme(panel.border = element_blank(),
+        axis.line = element_blank(),
+        axis.title.x = element_text(size = 16),
+        axis.text.x = element_text(size = 12),
+        axis.title.y = element_text(size = 16),
+        plot.title = element_text(size = 20),
+        legend.position="bottom",
+        legend.key.width = unit(1.5, "cm"))+
+  labs(fill="SPV")
 
   #theme(axis.text = element_blank(),
    #     axis.title = element_blank(),

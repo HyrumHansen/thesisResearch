@@ -31,9 +31,15 @@ ggplot(data = melt(efficiencies),
   geom_boxplot(color = 'blue',
                outlier.color="black",
                alpha = 0.4) +
-  ggtitle("Three Factor Quartic Model") +
+  ggtitle("") +
   theme(legend.position="none") +
   xlab("Number of Trials") +
   ylab("Absolute Efficiency (%)")+
-  coord_cartesian(ylim = c(0, 70))
+  coord_cartesian(ylim = c(0, 60)) +
+  theme(
+    axis.title.x = element_text(size = 16),
+    axis.text.x = element_text(size = 12),
+    axis.title.y = element_text(size = 16),
+    plot.title = element_text(size = 20)
+  )
 

@@ -23,11 +23,16 @@ for (i in 1:100){
 # for all the runs of Nelder-Mead
 ggplot(data.frame(y = convergence_data), aes(y = y)) +
   geom_boxplot(color = "blue", alpha = 0.7, width = 0.15) +
-  labs(title = "Convergence Distribution for 100 Runs of Nelder Mead",
+  labs(title = "",
        x = "K=2, N=10",
-       y = "Iterations to Converge")+
-  theme(axis.text.x = element_blank(),
-        axis.ticks.x = element_blank())
+       y = "Iterations to Convergence")+
+  theme(
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank(),
+    axis.title.x = element_text(size = 16),
+    axis.title.y = element_text(size = 16),
+    plot.title = element_text(size = 20)
+  )
 
 # Now we need to re-score the designs and compute approximation error
 
@@ -75,10 +80,6 @@ for (j in 1:100){
                           'absolute error' = error)
 }
 
-# Line plot for the first one
-
-
-
 # To store the average error across all time steps
 avg_error <- rep(0, 100)
 for (i in 1:100){
@@ -87,19 +88,26 @@ for (i in 1:100){
 
 # Boxplot for error
 ggplot() +
-  geom_boxplot(aes(y = avg_error), color = "blue") +
-  labs(title = "Boxplot of Average Approximation Error",
-       y = "Absolute Error") +
+  geom_boxplot(aes(y = log(avg_error)), color = "blue") +
+  labs(title = "",
+       y = "Log Absolute Error") +
   theme(axis.text.x = element_blank(),
-        axis.ticks.x = element_blank())
+        axis.ticks.x = element_blank(),
+        axis.title.y = element_text(size = 16))
 df_one <- data.frame(x = 1:length(data[[1]]$absolute.error), y = data[[1]]$absolute.error)
 
 # Now to plot error across all runs of Nelder-Mead
 ggplot(df_one, aes(x, y)) +
   geom_line(color = "blue", linewidth = 1.2) +
-  labs(title = "Absolute Error Over Time",
+  labs(title = "",
        x = "Nelder-Mead Iteration",
-       y = "Absolute Error")
+       y = "Absolute Error")  +
+  theme(
+         axis.title.x = element_text(size = 16),
+         axis.text.x = element_text(size = 12),
+         axis.title.y = element_text(size = 16),
+         plot.title = element_text(size = 20)
+       )
 
 
 # Find the maximum length among all data.frames
@@ -129,6 +137,13 @@ data_df <- data.frame(x = 1:length(average_values), y = average_values)
 # Create a line plot with a blue line
 ggplot(data_df, aes(x, y)) +
   geom_line(color = "blue", linewidth = 1.2) +
-  labs(title = "Average Absolute Error at Each Nelder-Mead Iteration",
+  labs(title = "",
        x = "Nelder-Mead Iteration",
-       y = "Average Absolute Error")
+       y = "Average Absolute Error") +
+  theme(
+    axis.title.x = element_text(size = 16),
+    axis.text.x = element_text(size = 12),
+    axis.title.y = element_text(size = 16),
+    plot.title = element_text(size = 20)
+  )
+

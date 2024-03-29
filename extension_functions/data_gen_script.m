@@ -2,24 +2,17 @@
 parpool('local')
 iterations = 100;
 
-tic
-% Empty Slates
-designs = repmat({[]}, 1, iterations);
-fvals = double.empty(iterations, 0);
-run = double.empty(iterations, 0);
-
 % Design Scenario
-N = 11;
+N = 10;
 K = 2;
 model = [0 0;
          1 0;
          0 1;
+         1 1;
          2 0;
          0 2;
          3 0;
-         0 3;
-         4 0;
-         0 4];
+         0 3];
 
 % parameters must be set
 A = [];
@@ -41,17 +34,8 @@ parfor i=1:iterations
         'Algorithm', 'interior-point','OutputFcn', @outputFcn_global);
     
     % Try fmincon
-    f = @(x)gloptipoly_k2_quartic(x, N, K);
+    f = @(x)gloptipoly_k2_cubic(x, N, K);
     [x_optimal, fval, exitflag, output] = fmincon(f, x0, A, b, Aeq, beq, lb, ub, [], options);
-    
-    % Finally to store the designs
-    designs{i} = x_optimal.';
-    fvals(i) = fval;
-    run(i) = i;
 end
-toc
+delete(gcp('nocreate'))
 
-% Write the table to a CSV file
-data = table(run(:), fvals(:));
-csvwrite("higher_order_data/gloptipoly_k2n11_quartic_designs.csv", designs)
-writetable(data, 'higher_order_data/gloptipoly_k2n11_quartic.csv');

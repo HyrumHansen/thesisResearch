@@ -2,13 +2,13 @@
 ## This script to boxplot stuff ##
 ##################################
 
-pexch <- read.csv("point_exchange/data/k3n12_pexch_efficiencies.csv")
-mod_pexch <- read.csv("point_exchange/data/k3n12_pexch_mod_efficiencies.csv")
-nm <- read.csv("borkowski_cases/K=3_N=12.csv")
+pexch <- read.csv("point_exchange/data/k2n8_pexch_efficiencies.csv")
+mod_pexch <- read.csv("point_exchange/data/k2n8_pexch_mod_efficiencies.csv")
+nm <- read.csv("borkowski_cases/K=2_N=8.csv")
 
-pexch <- 11.99/as.numeric(unname(unlist(pexch$Var2[pexch$Var2 != 0])))*100
-mod_pexch <- 11.99/as.numeric(unname(unlist(mod_pexch$Var2[mod_pexch$Var2 != 0])))*100
-nm <- 11.99/unname(unlist(nm$Var2))*100
+pexch <- 6.822/as.numeric(unname(unlist(pexch$Var2[pexch$Var2 != 0])))*100
+mod_pexch <- 6.822/as.numeric(unname(unlist(mod_pexch$Var2[mod_pexch$Var2 != 0])))*100
+nm <- 6.822/unname(unlist(nm$Var2))*100
 
 # Combine the vectors into a data frame
 df <- data.frame(
@@ -18,12 +18,16 @@ df <- data.frame(
 )
 
 # Create side-by-side boxplot using ggplot2
-ggplot(df, aes(x = Group, y = Values, fill = Group)) +
+ggplot(df, aes(x = Group, y = Values)) +
   geom_boxplot() +
-  scale_fill_manual(values = c("skyblue", "lightgreen", "lightcoral")) +
   labs(title = "Candidate Optimal Design Distribution by Algorithm",
        x = "Algorithm",
        y = "Relative Efficiency") +
-  theme_minimal()
+  theme(
+    axis.title.x = element_text(size = 16),
+    axis.text.x = element_text(size = 12),
+    axis.title.y = element_text(size = 16),
+    plot.title = element_text(size = 20)
+  )
 
 
