@@ -7,7 +7,7 @@ This repository contains all functions and scripts required to find G-optimal de
 This repository contains a script that can be downloaded and immediately executed, assuming the correct add-ons have been added to the MATLAB path. 
 
 **Step 1: Add dependencies**
-Navigate to the add-ons menu in the 'environment' section of the 'home' tab. 
+Navigate to the add-ons menu in the 'environment' section of the 'home' tab. The following dependencies are required to run the example script:
    - Global Optimization Toolbox
    - Statistics and Machine Learning Toolbox
    - Optimization Toolbox
