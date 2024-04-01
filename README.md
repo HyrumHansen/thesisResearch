@@ -22,4 +22,4 @@ Clone or download this repository. You now have access to all the tools we built
 
 Navigate to the folder 'reproducable examples.' Inside this folder open the 'main.m' file. You may be prompted to add the file to the path. Do so, and it should execute correctly. 
 
-You may specify one of 'nm', 'pexch', or 'pso' as the argument to the run_example() function. A seed is set for reproducibility. The PEXCH design has a G-efficiency of 77% with respect to SOA, the Nelder-Mead design has about 89%. 
+You may specify one of 'nm', 'pexch', or 'pso' as the argument to the run_example() function. A seed is set for reproducibility. The PEXCH design has a G-efficiency of 77% with respect to SOA, the Nelder-Mead design has about 89%. PEXCH will run very quickly while PSO takes a long time and tends to crash machines with low compute power. 
