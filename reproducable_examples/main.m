@@ -5,7 +5,7 @@ addpath(genpath(dir))
 rng(123)
 
 % Grab the design
-[design, max_spv] = run_example("pexch");
+[design, max_spv] = run_example("nm");
 
 % Present the results
 design_mat = mat2str(design);
