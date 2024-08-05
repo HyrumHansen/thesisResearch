@@ -18,12 +18,10 @@ which.min(k10$Var2) # Index Number 31
 min(k9$Var2) # Max SPV of 11.56
 unlist(k9_designs[541:558])
 k9_opt <- matrix(
-  c(
-    c(-0.893970,  0.908830,  0.998340, -0.999060, -0.400470,  0.693020,  0.119070, 0.873560, -0.790110),
-    c(-0.999080, -0.998470,  0.098802,  0.884530,  0.996400, -0.521950,  0.486880, 0.991850, -0.245450)),
+  c(-0.89397, -0.99908, 0.90883, -0.99847, 0.99834, 0.098802, -0.99906, 0.88453, -0.40047, 0.9964, 0.69302, -0.52195, 0.11907, 0.48688, 0.87356, 0.99185, -0.79011, -0.24545), 
   ncol = 2,
   nrow = 9,
-  byrow = FALSE
+  byrow = TRUE
 )
 
 k10_opt <- matrix(unname(unlist(k10_designs[901:920])),
@@ -50,6 +48,25 @@ k11_opt <- matrix(
   nrow = 11,
   byrow = FALSE
 )
+
+k9_pso <- read.csv("pso_data/K=2_N=10.csv")
+k9_pso_designs <- read.csv("pso_data/K=2_N=10_designs.csv", header = FALSE)
+which.min(k9_pso$Var2)
+k9_opt <- matrix(
+  unname(unlist(k9_pso_designs[7:8])),
+  ncol = 2,
+  nrow = 10,
+  byrow = FALSE
+)
+
+k9_quadratic <- function(x1, x2){
+  mm <- matrix(c(rep(1, 9), k9_opt[,1], k9_opt[,2],
+                 k9_opt[,1]*k9_opt[,2], k9_opt[,1]^2, k9_opt[,2]^2),
+               nrow = 9, ncol = 6, byrow = FALSE)
+  x_vec <- c(1, x1, x2, x1*x2, x1^2, x2^2)
+  return(9*x_vec%*%solve(t(mm)%*%mm)%*%x_vec)
+}
+
 
 
 k9_cubic <- function(x1, x2){
@@ -98,25 +115,25 @@ data_generator <- function(polynomial, interval){
   return(data)
 }
 
-data <- data_generator(k11_quartic, 0.01)
+data <- data_generator(k9_cubic, 0.01)
 
-grid_points <- data.frame(x1 = k11_opt[,1],
-                           x2 = k11_opt[,2])
+grid_points <- data.frame(x1 = k9_opt[,1],
+                           x2 = k9_opt[,2])
 grid_points$spv <- rep(3, nrow(grid_points))
-optimal_point <- data.frame('x1' = -1, 'x2'= -1, 'spv' = 3)
+#optimal_point <- data.frame('x1' = -1, 'x2'= -1, 'spv' = 3)
 
-grid_points <- rbind(grid_points, optimal_point)
+#grid_points <- rbind(grid_points, optimal_point)
 
 # Add a new column to indicate the special point
-grid_points$special <- FALSE
-grid_points[which(grid_points$x1 == optimal_point$x1 & grid_points$x2 == optimal_point$x2), "special"] <- TRUE
-grid_points
+#grid_points$special <- FALSE
+#grid_points[which(grid_points$x1 == optimal_point$x1 & grid_points$x2 == optimal_point$x2), "special"] <- TRUE
+#grid_points
 
 # Create a ggplot object
 
 ggplot(data = data, aes(x = Var1, y = Var2, fill = spv)) +
   geom_tile() +
-  scale_fill_viridis(option="G", limits = c(4, 17)) +  # Color gradient
+  scale_fill_viridis(option="G", limits = c(2, 7)) +  # Color gradient
 
   ### Put the legend for this plot on the bottom!
   labs(title = "") +
@@ -125,8 +142,8 @@ ggplot(data = data, aes(x = Var1, y = Var2, fill = spv)) +
   scale_y_continuous(breaks = seq(-1, 1, by = 0.5)) +
   # Can make a vector outside the original dataset that has some information
   # about points to be plotted...
-  geom_point(data = grid_points[grid_points$special == FALSE,],
-             aes(x = x1, y = x2, color = special), size = 2.5, show.legend = FALSE,
+  geom_point(data = grid_points,
+             aes(x = x1, y = x2, color = "x"), size = 2.5, show.legend = FALSE,
              pch=21, stroke = 1.5, fill = "yellow2") +
 
   #geom_point(data = grid_points[grid_points$special == TRUE,],
